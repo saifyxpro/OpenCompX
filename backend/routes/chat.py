@@ -23,7 +23,7 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None, res
     """Generate SSE events with proper structured format for frontend consumption."""
     
     # 1. Initialize Sandbox if needed
-    if not agent_service.sandbox:
+    if not agent_service.container_running:
          res = resolution if resolution and len(resolution) == 2 else None
          info = agent_service.initialize_sandbox(resolution=res)
          # Yield sandbox info - CRITICAL: frontend needs sandboxId and vncUrl

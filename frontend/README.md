@@ -56,7 +56,7 @@ The application uses Server-Sent Events (SSE) to stream AI responses and actions
    
    Or manually:
    ```bash
-   docker-compose -f docker-compose.desktop.yml up -d
+   docker compose -f docker-compose.desktop.yml up -d
    ```
 
 6. **Open the App**

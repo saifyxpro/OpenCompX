@@ -251,10 +251,10 @@ def is_container_running(container_name: str = "openmanus-desktop") -> bool:
 
 
 def start_container():
-    """Start the desktop container using docker-compose."""
+    """Start the desktop container using docker compose."""
     try:
         subprocess.run(
-            ["docker-compose", "-f", "docker-compose.desktop.yml", "up", "-d", "--build"],
+            ["docker", "compose", "-f", "docker-compose.desktop.yml", "up", "-d", "--build"],
             check=True, timeout=300
         )
         time.sleep(10)  # Wait for VNC to start
