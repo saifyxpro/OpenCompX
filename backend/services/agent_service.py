@@ -214,15 +214,8 @@ class AgentService:
                 
                 # 3. Execute each action
                 for act in action:
-                    # Heuristic repair for legacy patterns
-                    import re
-                    legacy_pattern = r"(hotkey|press)\s*\(\s*[\[\(]?\s*(['\"](?:win|super|windows)['\"])"
-                    if re.search(legacy_pattern, act, re.IGNORECASE) and "write" in act:
-                        match = re.search(r"write\s*\(\s*['\"](.+?)['\"]\s*\)", act, re.IGNORECASE)
-                        if match:
-                            app_name = match.group(1).lower()
-                            print(f"Intercepting legacy pattern: converting to launch('{app_name}')")
-                            act = f"import pyautogui; pyautogui.launch('{app_name}')"
+                    # NOTE: We removed the aggressive "legacy pattern" interception
+                    # because it was breaking valid hotkey sequences like Ctrl+L for address bar
                     
                     print(f"  Executing: {act}")
                     all_actions.append(act)
@@ -232,7 +225,14 @@ class AgentService:
                         if "from pyautogui" in sanitized_act:
                             sanitized_act = sanitized_act.replace("from pyautogui", "# from pyautogui")
                         
-                        exec_globals = {"pyautogui": self.adapter, "time": time}
+                        # Also neutralize subprocess imports - we don't want agent installing stuff
+                        sanitized_act = sanitized_act.replace("import subprocess", "pass")
+                        sanitized_act = sanitized_act.replace("subprocess.run", "# subprocess.run")
+                        sanitized_act = sanitized_act.replace("subprocess.check_call", "# subprocess.check_call")
+                        
+                        # THE MAGIC: Execute code but inject our adapter as 'pyautogui'
+                        import subprocess as _subprocess
+                        exec_globals = {"pyautogui": self.adapter, "time": time, "subprocess": _subprocess}
                         exec(sanitized_act, exec_globals)
                         
                         # Human-like logging

@@ -24,35 +24,32 @@ class E2BAdapter:
     # --- Mouse Functions ---
     def click(self, x=None, y=None, clicks=1, interval=0.0, button='left', **kwargs):
         logger.info(f"E2B Click: x={x}, y={y}, clicks={clicks}, button={button}")
-        if x is not None and y is not None:
-            # E2B doesn't support moving and clicking in one go easily via click cmd, 
-            # usually separate, but we can try just clicking if move was implicit.
-            # Actually E2B left_click takes x, y.
-            pass
         
-        # Agent-S3 might pass coordinates. 
-        # CAUTION: Agent-S3 might rely on 'current position' if x,y are None.
-        # We should track position if needed, but for now assuming explicit coords or stateless.
+        # E2B SDK requires move_mouse first, then click without coordinates
+        if x is not None and y is not None:
+            self.sandbox.move_mouse(int(x), int(y))
         
         for _ in range(clicks):
             if button == 'left':
-                self.sandbox.left_click(x, y)
+                self.sandbox.left_click()
             elif button == 'right':
-                self.sandbox.right_click(x, y)
+                self.sandbox.right_click()
             elif button == 'middle':
-                self.sandbox.middle_click(x, y)
+                self.sandbox.middle_click()
             
             if interval > 0:
                 time.sleep(interval)
 
     def doubleClick(self, x=None, y=None, interval=0.0, button='left', **kwargs):
         logger.info(f"E2B DoubleClick: x={x}, y={y}")
-        self.sandbox.double_click(x, y)
+        if x is not None and y is not None:
+            self.sandbox.move_mouse(int(x), int(y))
+        self.sandbox.double_click()
 
     def moveTo(self, x, y, duration=0.0, **kwargs):
         # E2B move_mouse is instant, duration ignored
         logger.info(f"E2B MoveTo: x={x}, y={y}")
-        self.sandbox.move_mouse(x, y)
+        self.sandbox.move_mouse(int(x), int(y))
 
     def move(self, xOffset, yOffset, duration=0.0, **kwargs):
         # This is relative move. E2B doesn't have reliable relative move exposed directly 
@@ -62,11 +59,16 @@ class E2BAdapter:
 
     def drag(self, x, y, duration=0.0, **kwargs):
         # Dragging is complex in E2B simple API. 
-        # We might need mouse_press, move_mouse, mouse_release sequence.
-        # But Sandbox object might not expose low level 'mouse_press' easily in all SDK versions.
-        # Agent-S3 simple actions might use it.
+        # Use mouse_press, move_mouse, mouse_release sequence
         logger.info(f"E2B Drag to: x={x}, y={y}")
-        self.sandbox.left_click(x, y) # Fallback to click for now if drag not avail
+        try:
+            self.sandbox.mouse_press("left")
+            self.sandbox.move_mouse(int(x), int(y))
+            self.sandbox.mouse_release("left")
+        except Exception as e:
+            logger.error(f"Drag failed: {e}, falling back to click")
+            self.sandbox.move_mouse(int(x), int(y))
+            self.sandbox.left_click()
 
     def scroll(self, clicks, x=None, y=None, **kwargs):
         # Pyautogui scroll amount is clicks. E2B scroll takes 'direction' and 'amount'.
@@ -111,15 +113,37 @@ class E2BAdapter:
         logger.info(f"E2B Press (mapped): {keys}")
         
         for _ in range(presses):
-            # E2B press handles a single key or list? Docs say list is for combos (hotkeys).
-            # If we want sequential press, we should loop. 
-            # Pyautogui 'press' with a list means press them sequentially.
-            # BUT E2B 'press' with a list might mean "chord" (hotkey).
-            # Let's assume for sequential press, we call it one by one.
             for key in keys:
-                self.sandbox.press(key) # Assuming this is single key press
+                try:
+                    self.sandbox.press(key)
+                except Exception as e:
+                    # Fallback to xdotool with DISPLAY
+                    logger.warning(f"sandbox.press failed: {e}, using xdotool fallback")
+                    self._xdotool_key(key)
             if interval > 0:
                 time.sleep(interval)
+    
+    def _xdotool_key(self, key):
+        """Fallback key press using xdotool with DISPLAY set"""
+        # Map key names to xdotool format
+        key_map = {
+            'enter': 'Return',
+            'return': 'Return', 
+            'backspace': 'BackSpace',
+            'tab': 'Tab',
+            'escape': 'Escape',
+            'space': 'space',
+            'ctrl': 'ctrl',
+            'alt': 'alt',
+            'shift': 'shift',
+            'super': 'super',
+        }
+        xdo_key = key_map.get(key.lower(), key)
+        cmd = f"export DISPLAY=:0; xdotool key {xdo_key}"
+        try:
+            self.sandbox.commands.run(cmd, timeout=5)
+        except Exception as e:
+            logger.error(f"xdotool key failed: {e}")
                 
     def hotkey(self, *args, **kwargs):
         # map keys
@@ -132,20 +156,30 @@ class E2BAdapter:
         if 'super' in mapped_args or 'win' in args:
             try:
                 logger.info("Intercepted 'win' key: Executing xfce4-popup-whiskermenu")
-                self.sandbox.commands.run("xfce4-popup-whiskermenu", background=True)
+                self.sandbox.commands.run("export DISPLAY=:0; xfce4-popup-whiskermenu", background=True)
                 time.sleep(0.5) # Wait for menu
                 return # Skip physical key press to avoid toggling it closed
             except Exception as e:
                 logger.error(f"Failed to force open menu: {e}")
 
         # E2B press with control keys usually handles chords if passed as list
-        self.sandbox.press(list(mapped_args))
+        try:
+            self.sandbox.press(list(mapped_args))
+        except Exception as e:
+            # Fallback to xdotool
+            logger.warning(f"sandbox.press hotkey failed: {e}, using xdotool")
+            key_combo = "+".join(mapped_args)
+            cmd = f"export DISPLAY=:0; xdotool key {key_combo}"
+            try:
+                self.sandbox.commands.run(cmd, timeout=5)
+            except Exception as e2:
+                logger.error(f"xdotool hotkey failed: {e2}")
 
     def keyDown(self, key, **kwargs):
         # E2B SDK might not support holding keys down statefully in the simple client.
         # We just press it for now.
         logger.warning(f"E2B keyDown {key} converted to press")
-        self.sandbox.press(key)
+        self.press(key)
 
     def keyUp(self, key, **kwargs):
         pass
@@ -167,26 +201,15 @@ class E2BAdapter:
         
         actual_app = app_map.get(app.lower(), app)
         
-        # Try multiple approaches for robustness
-        # 1. First try with setsid to detach from terminal
-        cmd = f"export DISPLAY=:0; setsid {actual_app} &"
+        # Use nohup with background=True to avoid timeout issues
+        cmd = f"export DISPLAY=:0; nohup {actual_app} > /tmp/launch_{app}.log 2>&1 &"
         logger.info(f"E2B Launch Command: {cmd}")
         
         try:
-            # Run synchronously to capture any immediate errors
-            result = self.sandbox.commands.run(cmd, timeout=5)
-            logger.info(f"Launch result: stdout={result.stdout}, stderr={result.stderr}")
+            self.sandbox.commands.run(cmd, background=True)
+            time.sleep(1.5)  # Give app time to start
         except Exception as e:
             logger.error(f"Launch failed: {e}")
-            # Fallback: try with nohup
-            try:
-                fallback_cmd = f"export DISPLAY=:0; nohup {actual_app} > /tmp/launch.log 2>&1 &"
-                self.sandbox.commands.run(fallback_cmd, background=True)
-            except Exception as e2:
-                logger.error(f"Fallback launch also failed: {e2}")
-        
-        # Give the app time to start
-        time.sleep(1)
 
     def open_url(self, url):
         logger.info(f"E2B Open URL: {url}")
@@ -198,11 +221,10 @@ class E2BAdapter:
         
         for browser in browsers:
             try:
-                cmd = f"export DISPLAY=:0; setsid {browser} '{url}' &"
+                cmd = f"export DISPLAY=:0; nohup {browser} '{url}' > /tmp/browser.log 2>&1 &"
                 logger.info(f"Trying browser: {cmd}")
-                result = self.sandbox.commands.run(cmd, timeout=5)
-                logger.info(f"Browser result: {result.stdout}, {result.stderr}")
-                time.sleep(1)
+                self.sandbox.commands.run(cmd, background=True)
+                time.sleep(1.5)
                 return  # Success, exit
             except Exception as e:
                 logger.warning(f"{browser} failed: {e}")
