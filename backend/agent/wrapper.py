@@ -54,11 +54,14 @@ class AgentWrapper:
             self.sandbox.stream.start()
             
             # Run CUA2 Cleanup/Setup Command for Firefox (prevents first-run wizards)
+            # Run CUA2 Cleanup/Setup Command for Firefox (prevents first-run wizards)
             print("Configuring Sandbox Environment...")
             setup_cmd = """sudo mkdir -p /usr/lib/firefox-esr/distribution && echo '{"policies":{"OverrideFirstRunPage":"","OverridePostUpdatePage":"","DisableProfileImport":true,"DontCheckDefaultBrowser":true}}' | sudo tee /usr/lib/firefox-esr/distribution/policies.json > /dev/null"""
             self.sandbox.commands.run(setup_cmd)
             
-            time.sleep(2) # Wait for stream and setup
+            # Wait for desktop to be actually ready (prevent black screen issues)
+            self._wait_for_desktop_ready()
+            
             self.vnc_url = self.sandbox.stream.get_url()
             print(f"Sandbox created! VNC: {self.vnc_url}")
             
@@ -70,6 +73,28 @@ class AgentWrapper:
                 self._init_agent()
                 
         return {"sandbox_id": self.sandbox.sandbox_id, "vnc_url": self.vnc_url}
+
+    def _wait_for_desktop_ready(self):
+        print("Waiting for desktop to initialize...")
+        # Simple wait first
+        time.sleep(5)
+        
+        # Poll for non-black screenshot
+        # A completely black 1080p screen is small in PNG, but not zero.
+        # We just assume if we can take a screenshot without error, we are somewhat ready.
+        # But E2B sometimes takes time to start X server.
+        for i in range(10):
+            try:
+                s = self.sandbox.screenshot()
+                if s and len(s) > 10000: # Arbitrary threshold, empty black PNG is ~800 bytes sometimes
+                    print("Desktop ready (screenshot captured).")
+                    return
+                print(f"Waiting for desktop... ({i}/10)")
+                time.sleep(2)
+            except Exception as e:
+                print(f"Desktop not ready yet: {e}")
+                time.sleep(2)
+        print("Warning: Desktop might not be fully ready, proceeding anyway.")
 
     def _init_agent(self):
         engine_params = {
@@ -190,9 +215,33 @@ class AgentWrapper:
                     # We also expose launch/open_url directly on pyautogui object (adapter)
                     exec_globals = {"pyautogui": self.adapter, "time": time}
                     exec(sanitized_act, exec_globals)
-                    result_logs.append(f"Executed: {act}")
+                    
+                    # HUMAN-LIKE LOGGING
+                    # User wants to know "what I am doing" like a human worker
+                    log_msg = f"Executed: {act}" # fallback
+                    try:
+                        if "launch" in act:
+                             import re
+                             m = re.search(r"launch\(['\"](.+?)['\"]\)", act)
+                             app = m.group(1) if m else "application"
+                             log_msg = f"I am opening {app} for you..."
+                        elif "open_url" in act:
+                             import re
+                             m = re.search(r"open_url\(['\"](.+?)['\"]\)", act)
+                             url = m.group(1) if m else "URL"
+                             log_msg = f"I am navigating to {url}..."
+                        elif "write" in act:
+                             log_msg = "I am typing text..."
+                        elif "click" in act:
+                             log_msg = "I am interacting with the UI..."
+                        elif "hotkey" in act:
+                             log_msg = "I am pressing keys..."
+                    except:
+                        pass
+                        
+                    result_logs.append(log_msg)
                 except Exception as e:
-                    result_logs.append(f"Error: {e}")
+                    result_logs.append(f"I ran into an issue: {e}")
             
             return {
                 "status": "success", 

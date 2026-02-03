@@ -56,7 +56,10 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None):
         if result.get("info"):
              yield f"event: reasoning\ndata: {json.dumps(result['info'])}\n\n"
 
-        if result.get("actions"):
+        # Yield Execution Logs (now human-readable!)
+        if result.get("logs"):
+            for log in result["logs"]:
+                yield f"event: reasoning\ndata: {log}\n\n"
             for action in result["actions"]:
                 # Construct action object compatible with frontend expectations if possible?
                 # Surf expects specific action types. Agent-S3 returns code strings.
