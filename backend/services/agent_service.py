@@ -227,6 +227,15 @@ class AgentService:
                         # CRITICAL: Remove 'import pyautogui' to prevent overwriting our adapter
                         sanitized_act = sanitized_act.replace("import pyautogui;", "pass;")
                         sanitized_act = sanitized_act.replace("import pyautogui", "pass")
+
+                        # --- RUNTIME INTERCEPTOR: Fix broken "Start Menu" launches ---
+                        # If agent tries to use Win key + write 'firefox/chrome', force use .launch()
+                        lower_act = sanitized_act.lower()
+                        if "hotkey('win')" in lower_act and ("write('firefox')" in lower_act or "write('chrome')" in lower_act):
+                             print("  >>> INTERCEPTING: Converting broken 'Start Menu' launch to direct launch() <<<")
+                             app_name = "firefox" if "firefox" in lower_act else "google-chrome"
+                             sanitized_act = f"pyautogui.launch('{app_name}')"
+                        # -------------------------------------------------------------
                         
                         # Execute with adapter as pyautogui
                         import subprocess as _subprocess
