@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  desktop:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.desktop
+    container_name: openmanus-desktop
+    environment:
+      - VNC_RESOLUTION=1920x1080
+      - VNC_COL_DEPTH=24
+    ports:
+      - "5901:5901"   # VNC
+      - "6080:6080"   # noVNC web interface
+    volumes:
+      - ./screenshots:/home/agent/screenshots
+    restart: unless-stopped
+    shm_size: '2gb'  # Prevent browser crashes

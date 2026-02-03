@@ -1,23 +1,20 @@
 "use server";
 
-import { SANDBOX_TIMEOUT_MS } from "@/lib/config";
-import { Sandbox } from "@e2b/desktop";
+/**
+ * Server actions for local Docker container management.
+ * No E2B dependency - uses local Docker container.
+ */
 
 export async function increaseTimeout(sandboxId: string) {
-  try {
-    const desktop = await Sandbox.connect(sandboxId);
-    await desktop.setTimeout(SANDBOX_TIMEOUT_MS); // 5 minutes
-    return true;
-  } catch (error) {
-    console.error("Failed to increase timeout:", error);
-    return false;
-  }
+  // Local Docker doesn't need timeout management
+  console.log("Local Docker mode - timeout management not needed");
+  return true;
 }
 
 export async function stopSandboxAction(sandboxId: string) {
   try {
-    const desktop = await Sandbox.connect(sandboxId);
-    await desktop.kill();
+    // For local Docker, we could stop the container but it's better to leave it running
+    console.log("Local Docker mode - container will continue running for reuse");
     return true;
   } catch (error) {
     console.error("Failed to stop sandbox:", error);
