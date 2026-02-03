@@ -165,6 +165,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       const decoder = new TextDecoder();
       let assistantMessage = "";
       let buffer = "";
+      let responseCounter = 0; // Local counter to ensure unique IDs during rapid SSE updates
 
       while (true) {
         const { done, value } = await reader.read();
@@ -177,7 +178,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
                 setMessages((prev) => {
                   const systemMessage: SystemChatMessage = {
                     role: "system",
-                    id: `system-${Date.now()}`,
+                    id: `system-${Date.now()}-${responseCounter++}`, // Unique ID
                     content: "Task completed",
                   };
 
@@ -212,7 +213,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
               if (parsedEvent.action) {
                 const actionMessage: ActionChatMessage<typeof model> = {
                   role: "action",
-                  id: `action-${Date.now()}`,
+                  id: `action-${Date.now()}-${responseCounter++}`, // Unique ID
                   action: parsedEvent.action,
                   status: "pending",
                   model,
@@ -227,7 +228,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
                 assistantMessage = parsedEvent.content;
                 const reasoningMessage: AssistantChatMessage = {
                   role: "assistant",
-                  id: `assistant-${Date.now()}-${messages.length}`,
+                  id: `assistant-${Date.now()}-${responseCounter++}`, // Unique ID
                   content: assistantMessage,
                   model,
                 };
