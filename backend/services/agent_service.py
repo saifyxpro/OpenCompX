@@ -166,6 +166,7 @@ class AgentService:
 
         all_logs = []
         all_actions = []
+        executed_actions_count = 0  # Track ACTUAL actions executed, not just steps
         
         # Augment instruction - CRITICAL: Must tell agent to do ONE step at a time
         augmented_instruction = (
@@ -204,15 +205,22 @@ class AgentService:
                 if action and len(action) == 1:
                     single_action = action[0].strip().upper()
                     if single_action == "DONE":
-                        print("Agent returned DONE - checking if premature...")
-                        # If step 1, this is premature - agent didn't do anything
-                        if step_num == 0:
-                            print("WARNING: Premature DONE on step 1! Skipping and retrying...")
-                            all_logs.append("Agent tried to exit early, retrying...")
+                        print(f"Agent returned DONE - checking if premature (executed_actions_count={executed_actions_count})...")
+                        # If no actions have been EXECUTED yet, this is premature
+                        if executed_actions_count == 0:
+                            print("WARNING: Premature DONE! No actions executed yet. Forcing retry...")
+                            all_logs.append("Agent tried to complete without doing anything, retrying...")
+                            # Give it a stronger hint
+                            augmented_instruction = (
+                                f"{instruction}\n\n"
+                                "YOU MUST EXECUTE AN ACTION NOW. Do not say DONE.\n"
+                                "Your FIRST action should be: pyautogui.launch('firefox')\n"
+                                "Execute this ONE action, then wait for the next screenshot."
+                            )
                             continue
                         else:
                             all_logs.append("Task completed!")
-                            print("Agent signaled DONE after doing work")
+                            print(f"Agent signaled DONE after {executed_actions_count} actions")
                             break
                     elif single_action == "FAIL":
                         print("Agent returned FAIL - skipping")
@@ -252,6 +260,10 @@ class AgentService:
                         import subprocess as _subprocess
                         exec_globals = {"pyautogui": self.adapter, "time": time, "subprocess": _subprocess}
                         exec(sanitized_act, exec_globals)
+                        
+                        # Track successful execution
+                        executed_actions_count += 1
+                        print(f"  Action executed successfully (total: {executed_actions_count})")
                         
                         # Human-like logging
                         log_msg = self._get_human_log(act)
