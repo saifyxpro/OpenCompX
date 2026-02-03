@@ -170,13 +170,28 @@ class AgentService:
             
         return {"status": "success", "actions": all_actions, "logs": all_logs, "info": info}
 
-    def execute_next_step(self, instruction: str, step_num: int, executed_actions_count: int):
+    def execute_next_step(self, instruction: str, step_num: int, executed_actions_count: int, reset_env: bool = False):
         """Execute a single step of the agent loop."""
         if not self.container_running:
             self.initialize_sandbox()
 
         if not self.agent:
             return {"status": "error", "message": "Agent not loaded"}
+
+        # --- SESSION MANAGEMENT ---
+        if step_num == 0:
+            print(">>> NEW TASK DETECTED: Resetting Agent Memory <<<")
+            # 1. Always reset agent memory for a new user request to prevent "Done" loops
+            if hasattr(self.agent, "reset"):
+                self.agent.reset()
+            elif hasattr(self.agent, "clear_history"):
+                self.agent.clear_history()
+            
+            # 2. Cleanup desktop (Close Apps) ONLY if explicitly requested (New Session)
+            if reset_env:
+                print(">>> FRESH START: Cleaning up desktop (Closing Apps) <<<")
+                self.cleanup_desktop()
+        # --------------------------
 
         logs = []
         actions_executed = []
@@ -221,16 +236,17 @@ class AgentService:
                 single_action = action[0].strip().upper()
                 if single_action == "DONE":
                     print(f"Agent returned DONE (executed_actions_count={executed_actions_count})...")
+                    # If done immediately without doing anything, it's suspicious
                     if executed_actions_count == 0:
-                        print("WARNING: Premature DONE! Forcing retry...")
-                        logs.append("Agent tried to exit early, retrying...")
-                        return {
-                            "status": "continue",
-                            "actions": [],
-                            "logs": logs,
-                            "info": info,
-                            "plan": info.get("plan", "")
-                        }
+                         print("WARNING: Premature DONE! Forcing retry...")
+                         logs.append("Agent tried to exit early, retrying...")
+                         return {
+                             "status": "continue",
+                             "actions": [],
+                             "logs": logs,
+                             "info": info,
+                             "plan": info.get("plan", "")
+                         }
                     else:
                         logs.append("Task completed!")
                         return {
@@ -315,6 +331,17 @@ class AgentService:
              print(f"Agent predict error: {e}")
              return {"status": "error", "message": str(e)}
 
+    def cleanup_desktop(self):
+        """Kill all running applications directly."""
+        if not self.adapter:
+             return
+        print("Cleaning up desktop...")
+        self.adapter._exec("pkill -9 -f firefox")
+        self.adapter._exec("pkill -9 -f chrome")
+        self.adapter._exec("pkill -9 -f chromium")
+        self.adapter._exec("pkill -9 -f terminal")
+        time.sleep(1)
+
     def _get_human_log(self, action_code: str) -> str:
         """Convert pyautogui code to human-readable description."""
         if "launch(" in action_code:
@@ -336,6 +363,7 @@ class AgentService:
 
     def stop(self):
         """Stop the container (optional - can leave running for reuse)."""
-        print("Stop requested - container will continue running for reuse.")
-        # Don't actually stop, just mark as available for next request
-        pass
+        print("Stop requested - Cleaning up desktop...")
+        self.cleanup_desktop()
+        self.vnc_url = None
+        # Don't stop container, just cleanup apps

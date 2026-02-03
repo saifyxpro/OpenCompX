@@ -19,7 +19,7 @@ class ChatRequest(BaseModel):
     class Config:
         extra = "ignore"
 
-async def event_generator(instruction: str, existing_sandbox_id: str | None, resolution: list[int] | None):
+async def event_generator(instruction: str, existing_sandbox_id: str | None, resolution: list[int] | None, reset_env: bool = False):
     """Generate SSE events with proper structured format for frontend consumption."""
     
     try:
@@ -38,7 +38,9 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None, res
         
         for step in range(10):
             # Run one step (blocking inside thread)
-            result = await asyncio.to_thread(agent_service.execute_next_step, instruction, step, executed_count)
+            # Pass reset_env only for step 0
+            should_reset = reset_env if step == 0 else False
+            result = await asyncio.to_thread(agent_service.execute_next_step, instruction, step, executed_count, should_reset)
             
             if result["status"] == "error":
                  yield f"event: error\ndata: {json.dumps({'content': result['message']})}\n\n"
@@ -97,8 +99,14 @@ async def chat(request: ChatRequest):
     # Extract latest user message
     last_message = request.messages[-1]["content"]
     
+    # Determine if we should reset the environment (New conversation or clear chat)
+    # If explicit sandboxId is NOT provided, it might mean new session? 
+    # Or rely on message length?
+    # If messages length is 1 (just the new prompt), we clean up.
+    should_reset_env = len(request.messages) == 1
+    
     return StreamingResponse(
-        event_generator(last_message, request.sandboxId, request.resolution),
+        event_generator(last_message, request.sandboxId, request.resolution, should_reset_env),
         media_type="text/event-stream"
     )
 
