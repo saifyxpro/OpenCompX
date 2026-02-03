@@ -155,11 +155,11 @@ class AgentService:
             "CRITICAL INSTRUCTIONS:\n"
             "1. Execute ONLY ONE action at a time, then wait for the next screenshot.\n"
             "2. Do NOT plan multiple steps ahead - just do the NEXT single action.\n"
-            "3. To open applications: use pyautogui.launch('app_name')\n"
-            "4. To open URLs: use pyautogui.open_url('url')\n"
+            "3. To open applications: YOU MUST use `pyautogui.launch('app_name')`. DO NOT use keyboard shortcuts (like win key or alt+f2) or menu clicks to launch apps. THEY WILL FAIL.\n"
+            "4. To open URLs: use `pyautogui.open_url('url')`\n"
             "5. The system password for user 'agent' is 'agent'. If asked for a password, type 'agent'.\n"
             "6. Do NOT output 'DONE' until you can SEE the task is complete in the screenshot.\n\n"
-            "Your first action should be to launch Firefox."
+            "Your first action should be to launch Firefox using `pyautogui.launch('firefox')`."
         )
         
         for step_num in range(MAX_STEPS):
@@ -167,10 +167,10 @@ class AgentService:
             print(f"AGENT STEP {step_num + 1}/{MAX_STEPS}")
             print(f"{'='*60}")
             
-            # Wait 5 seconds before first screenshot
+            # Wait 2 seconds before first screenshot
             if step_num == 0:
-                print("Waiting 5 seconds for screen to settle...")
-                time.sleep(5)
+                print("Waiting 2 seconds for screen to settle...")
+                time.sleep(2)
             
             # Capture screenshot
             screenshot_bytes = self._take_screenshot()
