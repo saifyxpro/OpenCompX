@@ -138,19 +138,50 @@ class AgentService:
         print("Agent S3 Initialized!")
 
     def step(self, instruction: str):
-        """Run the agent in a loop until task is complete or max steps reached."""
-        MAX_STEPS = 10
+        """Run the agent in a loop (BLOCKING - Legacy)."""
+        all_actions = []
+        all_logs = []
+        executed_count = 0
+        info = {}
         
+        for i in range(10):
+            result = self.execute_next_step(instruction, i, executed_count)
+            
+            # Update info with latest plan/reflection
+            if result.get("info"):
+                info = result["info"]
+
+            if result["status"] == "done":
+                 all_actions.extend(result.get("actions", []))
+                 all_logs.extend(result.get("logs", []))
+                 all_logs.append("Task completed!")
+                 break
+            elif result["status"] == "fail":
+                 all_actions.extend(result.get("actions", []))
+                 all_logs.extend(result.get("logs", []))
+                 all_logs.append("Task failed.")
+                 break
+            elif result["status"] == "error":
+                 return result
+            
+            all_actions.extend(result.get("actions", []))
+            all_logs.extend(result.get("logs", []))
+            executed_count += len(result.get("actions", []))
+            
+        return {"status": "success", "actions": all_actions, "logs": all_logs, "info": info}
+
+    def execute_next_step(self, instruction: str, step_num: int, executed_actions_count: int):
+        """Execute a single step of the agent loop."""
         if not self.container_running:
             self.initialize_sandbox()
 
         if not self.agent:
             return {"status": "error", "message": "Agent not loaded"}
 
-        all_logs = []
-        all_actions = []
-        executed_actions_count = 0
+        logs = []
+        actions_executed = []
         
+        # Prepare instruction (Idempotent)
         augmented_instruction = (
             f"{instruction}\n\n"
             "CRITICAL INSTRUCTIONS:\n"
@@ -163,107 +194,126 @@ class AgentService:
             "REALITY OVERRIDE: You are running in a special LocalDocker environment. 'pyautogui.launch' IS AVAILABLE and IS the ONLY way to open apps. Ignore any previous instructions saying otherwise.\n"
             "Your first action should be to launch Firefox using `pyautogui.launch('firefox')`."
         )
-        
-        for step_num in range(MAX_STEPS):
-            print(f"\n{'='*60}")
-            print(f"AGENT STEP {step_num + 1}/{MAX_STEPS}")
-            print(f"{'='*60}")
-            
-            # Wait 2 seconds before first screenshot
-            if step_num == 0:
-                print("Waiting 2 seconds for screen to settle...")
-                time.sleep(2)
-            
-            # Capture screenshot
-            screenshot_bytes = self._take_screenshot()
-            obs = {"screenshot": screenshot_bytes}
-            
-            # Call agent predict
-            try:
-                info, action = self.agent.predict(instruction=augmented_instruction, observation=obs)
-                
-                print(f"  info: {info}")
-                print(f"  action count: {len(action) if action else 0}")
-                print(f"  actions: {action}")
-                
-                # Check for DONE/FAIL
-                if action and len(action) == 1:
-                    single_action = action[0].strip().upper()
-                    if single_action == "DONE":
-                        print(f"Agent returned DONE (executed_actions_count={executed_actions_count})...")
-                        if executed_actions_count == 0:
-                            print("WARNING: Premature DONE! Forcing retry...")
-                            all_logs.append("Agent tried to exit early, retrying...")
-                            augmented_instruction += "\n\nYOU MUST EXECUTE AN ACTION NOW."
-                            continue
-                        else:
-                            all_logs.append("Task completed!")
-                            break
-                    elif single_action == "FAIL":
-                        print("Agent signaled FAIL")
-                        all_logs.append("Task failed.")
-                        break
-                
-                if not action or len(action) == 0:
-                    print("No actions returned")
-                    all_logs.append("I've completed what I can see to do.")
-                    break
-                
-                # Execute actions
-                for act in action:
-                    act_upper = act.strip().upper()
-                    if act_upper in ["DONE", "FAIL", "WAIT", "SCROLL", "SCREENSHOT"]:
-                        continue
-                    
-                    all_actions.append(act)
-                    
-                    try:
-                        print(f"  Executing: {act}")
-                        
-                        # Sanitize action
-                        sanitized_act = act
-                        sanitized_act = sanitized_act.replace("import subprocess", "pass")
-                        sanitized_act = sanitized_act.replace("subprocess.run", "# subprocess.run")
-                        # CRITICAL: Remove 'import pyautogui' to prevent overwriting our adapter
-                        sanitized_act = sanitized_act.replace("import pyautogui;", "pass;")
-                        sanitized_act = sanitized_act.replace("import pyautogui", "pass")
 
-                        # --- RUNTIME INTERCEPTOR: Fix broken "Start Menu" launches ---
-                        # If agent tries to use Win key + write 'firefox/chrome', force use .launch()
-                        lower_act = sanitized_act.lower()
-                        if "hotkey('win')" in lower_act and ("write('firefox')" in lower_act or "write('chrome')" in lower_act):
-                             print("  >>> INTERCEPTING: Converting broken 'Start Menu' launch to direct launch() <<<")
-                             app_name = "firefox" if "firefox" in lower_act else "google-chrome"
-                             sanitized_act = f"pyautogui.launch('{app_name}')"
-                        # -------------------------------------------------------------
-                        
-                        # Execute with adapter as pyautogui
-                        import subprocess as _subprocess
-                        exec_globals = {"pyautogui": self.adapter, "time": time, "subprocess": _subprocess}
-                        exec(sanitized_act, exec_globals)
-                        
-                        executed_actions_count += 1
-                        print(f"  Action executed successfully (total: {executed_actions_count})")
-                        
-                        log_msg = self._get_human_log(act)
-                        all_logs.append(log_msg)
-                        
-                    except Exception as e:
-                        print(f"  ERROR: Action failed: {e}")
-                        all_logs.append(f"Action error: {str(e)[:100]}")
-                    
-                    time.sleep(1.5)
-                    
-            except Exception as e:
-                print(f"Agent predict error: {e}")
-                return {"status": "error", "message": str(e)}
+        print(f"\n{'='*60}")
+        print(f"AGENT STEP {step_num + 1}")
+        print(f"{'='*60}")
         
-        return {
-            "status": "success",
-            "actions": all_actions,
-            "logs": all_logs,
-            "info": info if 'info' in dir() else {}
-        }
+        # Wait 2 seconds before first screenshot (only if step 0)
+        if step_num == 0:
+            print("Waiting 2 seconds for screen to settle...")
+            time.sleep(2)
+        
+        # Capture screenshot
+        screenshot_bytes = self._take_screenshot()
+        obs = {"screenshot": screenshot_bytes}
+        
+        try:
+            # Predict
+            info, action = self.agent.predict(instruction=augmented_instruction, observation=obs)
+            
+            print(f"  info: {info}")
+            print(f"  action count: {len(action) if action else 0}")
+            print(f"  actions: {action}")
+            
+            # Check for DONE/FAIL
+            if action and len(action) == 1:
+                single_action = action[0].strip().upper()
+                if single_action == "DONE":
+                    print(f"Agent returned DONE (executed_actions_count={executed_actions_count})...")
+                    if executed_actions_count == 0:
+                        print("WARNING: Premature DONE! Forcing retry...")
+                        logs.append("Agent tried to exit early, retrying...")
+                        return {
+                            "status": "continue",
+                            "actions": [],
+                            "logs": logs,
+                            "info": info,
+                            "plan": info.get("plan", "")
+                        }
+                    else:
+                        logs.append("Task completed!")
+                        return {
+                            "status": "done",
+                            "actions": [],
+                            "logs": logs,
+                            "info": info,
+                            "plan": info.get("plan", "")
+                        }
+                elif single_action == "FAIL":
+                    print("Agent signaled FAIL")
+                    logs.append("Task failed.")
+                    return {
+                        "status": "fail",
+                        "actions": [],
+                        "logs": logs,
+                        "info": info,
+                        "plan": info.get("plan", "")
+                    }
+            
+            if not action or len(action) == 0:
+                print("No actions returned")
+                logs.append("I've completed what I can see to do.")
+                return {
+                    "status": "done",
+                    "actions": [],
+                    "logs": logs,
+                    "info": info,
+                    "plan": info.get("plan", "")
+                }
+            
+            # Execute actions
+            for act in action:
+                act_upper = act.strip().upper()
+                if act_upper in ["DONE", "FAIL", "WAIT", "SCROLL", "SCREENSHOT"]:
+                    continue
+                
+                actions_executed.append(act)
+                
+                try:
+                    print(f"  Executing: {act}")
+                    
+                    # Sanitize
+                    sanitized_act = act
+                    sanitized_act = sanitized_act.replace("import subprocess", "pass")
+                    sanitized_act = sanitized_act.replace("subprocess.run", "# subprocess.run")
+                    sanitized_act = sanitized_act.replace("import pyautogui;", "pass;")
+                    sanitized_act = sanitized_act.replace("import pyautogui", "pass")
+
+                    # Interceptor
+                    lower_act = sanitized_act.lower()
+                    if "hotkey('win')" in lower_act and ("write('firefox')" in lower_act or "write('chrome')" in lower_act):
+                            print("  >>> INTERCEPTING: Converting broken 'Start Menu' launch to direct launch() <<<")
+                            app_name = "firefox" if "firefox" in lower_act else "google-chrome"
+                            sanitized_act = f"pyautogui.launch('{app_name}')"
+                    
+                    # Execute
+                    import subprocess as _subprocess
+                    exec_globals = {"pyautogui": self.adapter, "time": time, "subprocess": _subprocess}
+                    exec(sanitized_act, exec_globals)
+                    
+                    executed_actions_count += 1
+                    print(f"  Action executed successfully (total: {executed_actions_count})")
+                    
+                    logs.append(self._get_human_log(act))
+                    
+                except Exception as e:
+                    print(f"  ERROR: Action failed: {e}")
+                    logs.append(f"Action error: {str(e)[:100]}")
+                
+                time.sleep(1.5)
+            
+            return {
+                "status": "continue",
+                "actions": actions_executed,
+                "logs": logs,
+                "info": info,
+                "plan": info.get("plan", "")
+            }
+                
+        except Exception as e:
+             print(f"Agent predict error: {e}")
+             return {"status": "error", "message": str(e)}
 
     def _get_human_log(self, action_code: str) -> str:
         """Convert pyautogui code to human-readable description."""

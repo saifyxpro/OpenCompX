@@ -33,48 +33,60 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None, res
         # 2. Start Agent Step
         yield f"event: reasoning\ndata: {json.dumps({'content': 'Analyzing screen and planning actions...'})}\n\n"
         
-        # Run agent step (blocking, uses thread pool)
-        result = await asyncio.to_thread(agent_service.step, instruction)
+        # 3. Start Agent Loop for Max 10 steps
+        executed_count = 0
         
-        if result["status"] == "error":
-             yield f"event: error\ndata: {json.dumps({'content': result['message']})}\n\n"
-             return
-
-        # 3. Yield Agent's reasoning/plan if available
-        if result.get("info"):
-             plan = result["info"].get("plan", "")
-             if plan:
-                 yield f"event: reasoning\ndata: {json.dumps({'content': plan})}\n\n"
-
-        # 4. Yield each action with structured format for UI action cards
-        actions = result.get("actions", [])
-        logs = result.get("logs", [])
-        
-        for i, action in enumerate(actions):
-            # Send action event - frontend will show pending action card
-            action_payload = {
-                "type": "computer_action",
-                "action_type": "execute",
-                "code": action
-            }
-            yield f"event: action\ndata: {json.dumps({'action': action_payload})}\n\n"
+        for step in range(10):
+            # Run one step (blocking inside thread)
+            result = await asyncio.to_thread(agent_service.execute_next_step, instruction, step, executed_count)
             
-            # Small delay to make UI feel responsive
+            if result["status"] == "error":
+                 yield f"event: error\ndata: {json.dumps({'content': result['message']})}\n\n"
+                 return
+
+            # Yield reasoning/plan
+            if result.get("info"):
+                 plan = result["info"].get("plan", "")
+                 if plan:
+                     yield f"event: reasoning\ndata: {json.dumps({'content': plan})}\n\n"
+
+            # Yield actions and logs
+            actions = result.get("actions", [])
+            logs = result.get("logs", [])
+            executed_count += len(actions)
+            
+            for i, action in enumerate(actions):
+                # Send action event
+                action_payload = {
+                    "type": "computer_action",
+                    "action_type": "execute",
+                    "code": action
+                }
+                yield f"event: action\ndata: {json.dumps({'action': action_payload})}\n\n"
+                
+                await asyncio.sleep(0.1)
+                
+                # Corresponding log
+                if i < len(logs):
+                    yield f"event: reasoning\ndata: {json.dumps({'content': logs[i]})}\n\n"
+                
+                # Complete the action card
+                yield f"event: action_completed\ndata: {json.dumps({})}\n\n"
+            
+            # Remaining logs
+            for log in logs[len(actions):]:
+                yield f"event: reasoning\ndata: {json.dumps({'content': log})}\n\n"
+
+            # Check termination
+            if result["status"] == "done":
+                yield f"event: done\ndata: {json.dumps({'content': 'Task completed'})}\n\n"
+                break
+            elif result["status"] == "fail":
+                yield f"event: done\ndata: {json.dumps({'content': 'Task failed'})}\n\n"
+                break
+            
+            # Important: Keep-alive / pacing
             await asyncio.sleep(0.1)
-            
-            # Send corresponding log as reasoning
-            if i < len(logs):
-                yield f"event: reasoning\ndata: {json.dumps({'content': logs[i]})}\n\n"
-            
-            # Send action_completed event - frontend will update card to completed
-            yield f"event: action_completed\ndata: {json.dumps({})}\n\n"
-        
-        # 5. If there are more logs than actions (status messages)
-        for log in logs[len(actions):]:
-            yield f"event: reasoning\ndata: {json.dumps({'content': log})}\n\n"
-
-        # 6. Done
-        yield f"event: done\ndata: {json.dumps({'content': 'Task completed'})}\n\n"
 
     except Exception as e:
         yield f"event: error\ndata: {json.dumps({'content': str(e)})}\n\n"
