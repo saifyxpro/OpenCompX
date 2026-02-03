@@ -83,23 +83,50 @@ class E2BAdapter:
     def typewrite(self, message, interval=0.0, **kwargs):
         self.write(message, interval, **kwargs)
 
+    # --- Helper ---
+    def _map_key(self, key):
+        key = key.lower()
+        mapping = {
+            'win': 'super',
+            'windows': 'super',
+            'altleft': 'alt',
+            'altright': 'alt',
+            'ctrlleft': 'ctrl',
+            'ctrlright': 'ctrl',
+            'shiftleft': 'shift',
+            'shiftright': 'shift',
+            'esc': 'escape',
+             # Add other mappings as needed for Linux/E2B
+        }
+        return mapping.get(key, key)
+
     def press(self, keys, presses=1, interval=0.0, **kwargs):
-        logger.info(f"E2B Press: {keys}")
-        # keys can be a list or single string
+        # normalize keys
         if isinstance(keys, str):
             keys = [keys]
         
+        # map keys
+        keys = [self._map_key(k) for k in keys]
+        
+        logger.info(f"E2B Press (mapped): {keys}")
+        
         for _ in range(presses):
+            # E2B press handles a single key or list? Docs say list is for combos (hotkeys).
+            # If we want sequential press, we should loop. 
+            # Pyautogui 'press' with a list means press them sequentially.
+            # BUT E2B 'press' with a list might mean "chord" (hotkey).
+            # Let's assume for sequential press, we call it one by one.
             for key in keys:
-                self.sandbox.press(key)
+                self.sandbox.press(key) # Assuming this is single key press
             if interval > 0:
                 time.sleep(interval)
-
+                
     def hotkey(self, *args, **kwargs):
-        logger.info(f"E2B Hotkey: {args}")
-        # Agent sends 'ctrl', 'c'. E2B press accepts list for combo? 
-        # Or usually it handles 'ctrl+c'. 
-        self.sandbox.press(list(args))
+        # map keys
+        mapped_args = [self._map_key(k) for k in args]
+        logger.info(f"E2B Hotkey (mapped): {mapped_args}")
+        # E2B press with control keys usually handles chords if passed as list
+        self.sandbox.press(list(mapped_args))
 
     def keyDown(self, key, **kwargs):
         # E2B SDK might not support holding keys down statefully in the simple client.
