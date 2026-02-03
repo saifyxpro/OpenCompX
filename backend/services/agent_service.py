@@ -155,137 +155,134 @@ class AgentService:
         print("Agent S3 Initialized!")
 
     def step(self, instruction: str):
+        """Run the agent in a loop until task is complete or max steps reached."""
+        MAX_STEPS = 10  # Prevent infinite loops
+        
         if not self.sandbox:
             self.initialize_sandbox()
 
-        # Capture screenshot from E2B
-        try:
-            # Use native E2B SDK screenshot method (v1.5.0+)
-            # Returns bytearray
-            screenshot_bytes = self.sandbox.screenshot(format="bytes")
-            
-            if screenshot_bytes:
-                obs = {
-                    "screenshot": bytes(screenshot_bytes)
-                }
-            else:
-                print("Screenshot captured but empty.")
-                obs = {"screenshot": b""}
-                
-        except Exception as e:
-            print(f"Screenshot exception: {e}")
-            import traceback
-            traceback.print_exc()
-            obs = {"screenshot": b""}
-
         if not self.agent:
-             return {"status": "error", "message": "Agent not loaded"}
+            return {"status": "error", "message": "Agent not loaded"}
 
-        # Predict
-        try:
-            # We mock the observation for now or implementing screenshot retrieval is next step
-            # Agent-S3 expects 'screenshot' in obs.
+        all_logs = []
+        all_actions = []
+        
+        # Augment instruction once
+        augmented_instruction = (
+            f"{instruction}\n\n"
+            "IMPORTANT: To open applications or websites, do NOT click icons. "
+            "Use the provided python functions directly:\n"
+            "- pyautogui.launch('app_name')  (e.g. 'firefox', 'xfce4-terminal')\n"
+            "- pyautogui.open_url('url')     (e.g. 'google.com')\n"
+            "Use these functions immediately if the task requires opening something."
+        )
+        
+        for step_num in range(MAX_STEPS):
+            print(f"\n{'='*60}")
+            print(f"AGENT STEP {step_num + 1}/{MAX_STEPS}")
+            print(f"{'='*60}")
             
-            # INJECT SYSTEM INSTRUCTION (CUA2 Style)
-            # We force the agent to use our new robust tools instead of flaky clicking.
-            augmented_instruction = (
-                f"{instruction}\n\n"
-                "IMPORTANT: To open applications or websites, do NOT click icons. "
-                "Use the provided python functions directly:\n"
-                "- pyautogui.launch('app_name')  (e.g. 'firefox', 'xfce4-terminal')\n"
-                "- pyautogui.open_url('url')     (e.g. 'google.com')\n"
-                "Use these functions immediately if the task requires opening something."
-            )
-
-            info, action = self.agent.predict(instruction=augmented_instruction, observation=obs)
+            # 1. Capture screenshot
+            try:
+                screenshot_bytes = self.sandbox.screenshot(format="bytes")
+                obs = {"screenshot": bytes(screenshot_bytes) if screenshot_bytes else b""}
+            except Exception as e:
+                print(f"Screenshot error: {e}")
+                obs = {"screenshot": b""}
             
-            # DEBUG: Log exactly what the agent returned
-            print(f"=" * 60)
-            print(f"AGENT PREDICT RESULT:")
-            print(f"  info type: {type(info)}")
-            print(f"  info: {info}")
-            print(f"  action type: {type(action)}")
-            print(f"  action count: {len(action) if action else 0}")
-            print(f"  actions: {action}")
-            print(f"=" * 60)
-            
-            # Check if actions are empty
-            if not action or len(action) == 0:
-                print("WARNING: Agent returned EMPTY actions! Grounding might have failed.")
-                return {
-                    "status": "success", 
-                    "info": info,
-                    "actions": [],
-                    "logs": ["I analyzed the screen but couldn't determine the next action. The grounding model may not be responding."]
-                }
-            
-            result_logs = []
-            # Track what we actually executed to return the truth
-            executed_actions = []
-            
-            for act in action:
-                # HEURISTIC REPAIR: Detect "Start Menu -> Type -> Enter" pattern
-                # If agent tries to key-press its way to an app, force-upgrade to launch()
-                # Use regex to handle 'win', "win", 'super', etc.
-                import re
-                legacy_pattern = r"(hotkey|press)\s*\(\s*[\[\(]?\s*(['\"](win|super|windows)['\"])"
-                if re.search(legacy_pattern, act, re.IGNORECASE) and "write" in act:
-                    # extract app name from write('Name')
-                    match = re.search(r"write\s*\(\s*['\"](.+?)['\"]\s*\)", act, re.IGNORECASE)
-                    if match:
-                        app_name = match.group(1).lower()
-                        print(f"Intercepting legacy open pattern: converting to launch('{app_name}')")
-                        act = f"import pyautogui; pyautogui.launch('{app_name}')"
+            # 2. Call agent predict
+            try:
+                info, action = self.agent.predict(instruction=augmented_instruction, observation=obs)
                 
-                print(f"Executing Agent Action: {act}")
-                executed_actions.append(act) # Add the REAL code we are about to run
+                print(f"  info: {info}")
+                print(f"  action count: {len(action) if action else 0}")
+                print(f"  actions: {action}")
                 
-                try:
-                    # Sanitize: Handle single-line code blocks like "import pyautogui; pyautogui.click()"
-                    # We must NOT delete the line, but rather neutralize the import so our injected 'pyautogui' global persists.
-                    sanitized_act = act.replace("import pyautogui", "pass")
-                    # Handle "from pyautogui import ..." if it appears (less common in AgentS3 but possible)
-                    if "from pyautogui" in sanitized_act:
-                         sanitized_act = sanitized_act.replace("from pyautogui", "# from pyautogui")
-
-                    # THE MAGIC: Execute code but inject our adapter as 'pyautogui'
-                    # We also expose launch/open_url directly on pyautogui object (adapter)
-                    exec_globals = {"pyautogui": self.adapter, "time": time}
-                    exec(sanitized_act, exec_globals)
+                # Check if agent signals completion
+                if info and isinstance(info, dict):
+                    # Agent S3 might signal done via info dict
+                    if info.get("done") or info.get("completed") or "DONE" in str(info).upper():
+                        all_logs.append("Task completed!")
+                        print("Agent signaled DONE")
+                        break
+                
+                # Check if no actions (agent might be stuck)
+                if not action or len(action) == 0:
+                    print("No actions returned, agent may be done or stuck")
+                    all_logs.append("I've completed what I can see to do.")
+                    break
+                
+                # 3. Execute each action
+                for act in action:
+                    # Heuristic repair for legacy patterns
+                    import re
+                    legacy_pattern = r"(hotkey|press)\s*\(\s*[\[\(]?\s*(['\"](?:win|super|windows)['\"])"
+                    if re.search(legacy_pattern, act, re.IGNORECASE) and "write" in act:
+                        match = re.search(r"write\s*\(\s*['\"](.+?)['\"]\s*\)", act, re.IGNORECASE)
+                        if match:
+                            app_name = match.group(1).lower()
+                            print(f"Intercepting legacy pattern: converting to launch('{app_name}')")
+                            act = f"import pyautogui; pyautogui.launch('{app_name}')"
                     
-                    # HUMAN-LIKE LOGGING
-                    # User wants to know "what I am doing" like a human worker
-                    log_msg = f"Executed: {act}" # fallback
+                    print(f"  Executing: {act}")
+                    all_actions.append(act)
+                    
                     try:
-                        if "launch" in act:
-                             import re
-                             m = re.search(r"launch\(['\"](.+?)['\"]\)", act)
-                             app = m.group(1) if m else "application"
-                             log_msg = f"I am opening {app} for you..."
-                        elif "open_url" in act:
-                             import re
-                             m = re.search(r"open_url\(['\"](.+?)['\"]\)", act)
-                             url = m.group(1) if m else "URL"
-                             log_msg = f"I am navigating to {url}..."
-                        elif "write" in act:
-                             log_msg = "I am typing text..."
-                        elif "click" in act:
-                             log_msg = "I am interacting with the UI..."
-                        elif "hotkey" in act:
-                             log_msg = "I am pressing keys..."
-                    except:
-                        pass
+                        sanitized_act = act.replace("import pyautogui", "pass")
+                        if "from pyautogui" in sanitized_act:
+                            sanitized_act = sanitized_act.replace("from pyautogui", "# from pyautogui")
                         
-                    result_logs.append(log_msg)
-                except Exception as e:
-                    result_logs.append(f"I ran into an issue: {e}")
-            
-            return {
-                "status": "success", 
-                "info": info,
-                "actions": executed_actions,  # Return what we actually ran!
-                "logs": result_logs
-            }
+                        exec_globals = {"pyautogui": self.adapter, "time": time}
+                        exec(sanitized_act, exec_globals)
+                        
+                        # Human-like logging
+                        log_msg = self._get_human_log(act)
+                        all_logs.append(log_msg)
+                        
+                    except Exception as e:
+                        error_msg = f"Action failed: {e}"
+                        print(f"  ERROR: {error_msg}")
+                        all_logs.append(error_msg)
+                
+                # 4. Wait a bit for UI to update before next step
+                time.sleep(1.5)
+                
+            except Exception as e:
+                print(f"Predict error: {e}")
+                import traceback
+                traceback.print_exc()
+                all_logs.append(f"Error during step: {e}")
+                break
+        
+        return {
+            "status": "success",
+            "info": {"steps_taken": step_num + 1},
+            "actions": all_actions,
+            "logs": all_logs
+        }
+    
+    def _get_human_log(self, act):
+        """Convert code action to human-readable log message."""
+        import re
+        if "launch" in act:
+            m = re.search(r"launch\(['\"](.+?)['\"]\)", act)
+            return f"I am opening {m.group(1) if m else 'application'} for you..."
+        elif "open_url" in act:
+            m = re.search(r"open_url\(['\"](.+?)['\"]\)", act)
+            return f"I am navigating to {m.group(1) if m else 'URL'}..."
+        elif "write" in act:
+            m = re.search(r"write\(['\"](.+?)['\"]\)", act)
+            text = m.group(1)[:30] + "..." if m and len(m.group(1)) > 30 else (m.group(1) if m else "text")
+            return f"I am typing: {text}"
+        elif "click" in act:
+            m = re.search(r"click\((\d+),\s*(\d+)\)", act)
+            if m:
+                return f"I am clicking at position ({m.group(1)}, {m.group(2)})..."
+            return "I am clicking..."
+        elif "hotkey" in act or "press" in act:
+            return "I am pressing keys..."
+        elif "scroll" in act:
+            return "I am scrolling..."
+        else:
+            return f"Executed: {act[:50]}..."
 
-        except Exception as e:
-            return {"status": "error", "message": str(e)}
