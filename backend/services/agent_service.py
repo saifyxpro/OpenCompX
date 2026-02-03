@@ -199,6 +199,26 @@ class AgentService:
 
             info, action = self.agent.predict(instruction=augmented_instruction, observation=obs)
             
+            # DEBUG: Log exactly what the agent returned
+            print(f"=" * 60)
+            print(f"AGENT PREDICT RESULT:")
+            print(f"  info type: {type(info)}")
+            print(f"  info: {info}")
+            print(f"  action type: {type(action)}")
+            print(f"  action count: {len(action) if action else 0}")
+            print(f"  actions: {action}")
+            print(f"=" * 60)
+            
+            # Check if actions are empty
+            if not action or len(action) == 0:
+                print("WARNING: Agent returned EMPTY actions! Grounding might have failed.")
+                return {
+                    "status": "success", 
+                    "info": info,
+                    "actions": [],
+                    "logs": ["I analyzed the screen but couldn't determine the next action. The grounding model may not be responding."]
+                }
+            
             result_logs = []
             # Track what we actually executed to return the truth
             executed_actions = []
