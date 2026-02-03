@@ -153,8 +153,23 @@ class E2BAdapter:
     # --- Application/URL Launchers (CUA2 Style) ---
     def launch(self, app):
         logger.info(f"E2B Launch: {app}")
+        
+        # Map common app names to their actual binary names on Debian/Ubuntu
+        app_map = {
+            "firefox": "firefox-esr",
+            "libreoffice": "libreoffice",
+            "libreoffice-calc": "libreoffice --calc",
+            "libreoffice--calc": "libreoffice --calc",  # Handle typo
+            "calc": "libreoffice --calc",
+            "terminal": "xfce4-terminal",
+            "xterm": "xterm",
+        }
+        
+        actual_app = app_map.get(app.lower(), app)
+        
         # Force DISPLAY=:0 and use nohup to prevent SIGHUP/closing
-        cmd = f"export DISPLAY=:0; nohup {app} > /tmp/launch_{app}.log 2>&1 &"
+        cmd = f"export DISPLAY=:0; nohup {actual_app} > /tmp/launch_{app}.log 2>&1 &"
+        logger.info(f"E2B Launch Command: {cmd}")
         self.sandbox.commands.run(cmd, background=True)
 
     def open_url(self, url):
@@ -162,8 +177,9 @@ class E2BAdapter:
         if not url.startswith("http"):
              url = f"https://{url}"
         
-        # Explicit firefox launch with display
-        cmd = f"export DISPLAY=:0; nohup firefox '{url}' > /tmp/firefox_launch.log 2>&1 &"
+        # Use firefox-esr on Debian/Ubuntu
+        cmd = f"export DISPLAY=:0; nohup firefox-esr '{url}' > /tmp/firefox_launch.log 2>&1 &"
+        logger.info(f"E2B Open URL Command: {cmd}")
         self.sandbox.commands.run(cmd, background=True)
 
     # --- Utils ---
