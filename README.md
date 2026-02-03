@@ -1,6 +1,6 @@
 # 🌊 OpenCompX
 
-**OpenCompX** is an open-source, agentic platform for computer use, capable of executing complex tasks autonomously. It combines advanced AI reasoning (supporting both Google Gemini 3 Flash and OpenAI GPT-4o) with real-time vision capabilities via UI-TARS.
+**OpenCompX** is an open-source, agentic platform for computer use, capable of executing complex tasks autonomously. It combines advanced AI reasoning (supporting both Google Gemini 3 Flash and OpenAI GPT-5) with real-time vision capabilities via UI-TARS.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Status](https://img.shields.io/badge/status-beta-orange.svg)
@@ -20,7 +20,6 @@
 - **Docker** & **Docker Compose**
 - **Google API Key** (for Gemini 3 Flash - Free/High Speed) OR **OpenAI API Key**
 - **Local vLLM** (for UI-TARS Vision)
-- *(Optional)* **E2B API Key** (if using Cloud Sandboxes)
 
 ### 1. Configuration
 Create `.env` file in `backend/`:
