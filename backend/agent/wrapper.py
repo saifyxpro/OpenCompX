@@ -135,7 +135,18 @@ class AgentWrapper:
             # We mock the observation for now or implementing screenshot retrieval is next step
             # Agent-S3 expects 'screenshot' in obs.
             
-            info, action = self.agent.predict(instruction=instruction, observation=obs)
+            # INJECT SYSTEM INSTRUCTION (CUA2 Style)
+            # We force the agent to use our new robust tools instead of flaky clicking.
+            augmented_instruction = (
+                f"{instruction}\n\n"
+                "IMPORTANT: To open applications or websites, do NOT click icons. "
+                "Use the provided python functions directly:\n"
+                "- pyautogui.launch('app_name')  (e.g. 'firefox', 'xfce4-terminal')\n"
+                "- pyautogui.open_url('url')     (e.g. 'google.com')\n"
+                "Use these functions immediately if the task requires opening something."
+            )
+
+            info, action = self.agent.predict(instruction=augmented_instruction, observation=obs)
             
             result_logs = []
             for act in action:
@@ -149,6 +160,7 @@ class AgentWrapper:
                          sanitized_act = sanitized_act.replace("from pyautogui", "# from pyautogui")
 
                     # THE MAGIC: Execute code but inject our adapter as 'pyautogui'
+                    # We also expose launch/open_url directly on pyautogui object (adapter)
                     exec_globals = {"pyautogui": self.adapter, "time": time}
                     exec(sanitized_act, exec_globals)
                     result_logs.append(f"Executed: {act}")

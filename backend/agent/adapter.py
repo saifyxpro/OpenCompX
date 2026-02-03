@@ -125,6 +125,19 @@ class E2BAdapter:
         # map keys
         mapped_args = [self._map_key(k) for k in args]
         logger.info(f"E2B Hotkey (mapped): {mapped_args}")
+        
+        # SPECIAL HANDLER: Windows key usually means "Open Start Menu"
+        # In XFCE (E2B default), keybindings can be flaky. 
+        # We force it open via command if we see 'win'/'super'.
+        if 'super' in mapped_args or 'win' in args:
+            try:
+                logger.info("Intercepted 'win' key: Executing xfce4-popup-whiskermenu")
+                self.sandbox.commands.run("xfce4-popup-whiskermenu", background=True)
+                time.sleep(0.5) # Wait for menu
+                return # Skip physical key press to avoid toggling it closed
+            except Exception as e:
+                logger.error(f"Failed to force open menu: {e}")
+
         # E2B press with control keys usually handles chords if passed as list
         self.sandbox.press(list(mapped_args))
 
@@ -136,6 +149,23 @@ class E2BAdapter:
 
     def keyUp(self, key, **kwargs):
         pass
+
+    # --- Application/URL Launchers (CUA2 Style) ---
+    def launch(self, app):
+        logger.info(f"E2B Launch: {app}")
+        # Run in background to not block
+        self.sandbox.commands.run(f"{app}", background=True)
+
+    def open_url(self, url):
+        logger.info(f"E2B Open URL: {url}")
+        # E2B Sandbox has .open() but sometimes it's better to just run firefox
+        if not url.startswith("http"):
+             url = f"https://{url}"
+        
+        # Try native .open if available (it opens in default browser)
+        # self.sandbox.open(url) 
+        # Actually CUA2 uses self.desktop.open(url) but let's be explicit with firefox for Linux
+        self.sandbox.commands.run(f"firefox {url}", background=True)
 
     # --- Utils ---
     def position(self):
