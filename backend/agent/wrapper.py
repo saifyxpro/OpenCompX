@@ -38,6 +38,10 @@ class AgentWrapper:
 
     def initialize_sandbox(self):
         if not self.sandbox:
+            api_key = os.getenv("E2B_API_KEY")
+            if not api_key or "placeholder" in api_key:
+                raise ValueError("E2B_API_KEY is missing or invalid in backend/.env")
+
             print("Initializing E2B Sandbox...")
             self.sandbox = Sandbox()
             # Start stream to get URL

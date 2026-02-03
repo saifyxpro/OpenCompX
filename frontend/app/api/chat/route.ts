@@ -23,8 +23,8 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      logError("Backend Error:", errorText);
-      return new Response(errorText || "Error communicating with Agent Backend", { status: 500 });
+      logError(`Backend Error (${response.status}):`, errorText || response.statusText);
+      return new Response(errorText || `Error communicating with Agent Backend: ${response.status}`, { status: response.status });
     }
 
     // Stream the response from the backend to the frontend

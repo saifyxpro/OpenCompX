@@ -27,6 +27,9 @@ class ChatRequest(BaseModel):
     sandboxId: str | None = None
     model: str = "openai"
 
+    class Config:
+        extra = "ignore"
+
 async def event_generator(instruction: str, existing_sandbox_id: str | None):
     # 1. Initialize Sandbox if needed
     if not agent_service.sandbox:
