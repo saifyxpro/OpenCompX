@@ -39,7 +39,7 @@ class AgentService:
         self.adapter = None
         self.vnc_url = None
 
-    def initialize_sandbox(self):
+    def initialize_sandbox(self, resolution=None):
         if not self.sandbox:
             api_key = os.getenv("E2B_API_KEY")
             if not api_key or "placeholder" in api_key:
@@ -50,10 +50,20 @@ class AgentService:
             # This ensures xfce4-popup-whiskermenu and other tools are available
             self.sandbox = Sandbox(template="k0wmnzir0zuzye6dndlw")
             
+            # Set Resolution if provided (Dynamic Resizing)
+            if resolution:
+                try:
+                    w, h = resolution
+                    print(f"Setting sandbox resolution to {w}x{h}")
+                    # xrandr needs to run in the display context, usually handled by E2B or just works.
+                    # We background it just in case, or run sync. Resizing is usually fast.
+                    self.sandbox.commands.run(f"xrandr -s {w}x{h}")
+                except Exception as e:
+                    print(f"Failed to set resolution: {e}")
+
             # Start stream to get URL
             self.sandbox.stream.start()
             
-            # Run CUA2 Cleanup/Setup Command for Firefox (prevents first-run wizards)
             # Run CUA2 Cleanup/Setup Command for Firefox (prevents first-run wizards)
             print("Configuring Sandbox Environment...")
             setup_cmd = """sudo mkdir -p /usr/lib/firefox-esr/distribution && echo '{"policies":{"OverrideFirstRunPage":"","OverridePostUpdatePage":"","DisableProfileImport":true,"DontCheckDefaultBrowser":true}}' | sudo tee /usr/lib/firefox-esr/distribution/policies.json > /dev/null"""

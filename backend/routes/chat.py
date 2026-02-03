@@ -14,14 +14,17 @@ class ChatRequest(BaseModel):
     messages: list
     sandboxId: str | None = None
     model: str = "openai"
+    resolution: list[int] | None = None
 
     class Config:
         extra = "ignore"
 
-async def event_generator(instruction: str, existing_sandbox_id: str | None):
+async def event_generator(instruction: str, existing_sandbox_id: str | None, resolution: list[int] | None):
     # 1. Initialize Sandbox if needed
     if not agent_service.sandbox:
-         info = agent_service.initialize_sandbox()
+         # Pass resolution ensuring it checks for None
+         res = resolution if resolution and len(resolution) == 2 else None
+         info = agent_service.initialize_sandbox(resolution=res)
          # Yield sandbox info
          yield f"event: sandbox_created\ndata: {json.dumps({'sandboxId': info['sandbox_id'], 'vncUrl': info['vnc_url']})}\n\n"
     
@@ -60,6 +63,6 @@ async def chat(request: ChatRequest):
     last_message = request.messages[-1]["content"]
     
     return StreamingResponse(
-        event_generator(last_message, request.sandboxId),
+        event_generator(last_message, request.sandboxId, request.resolution),
         media_type="text/event-stream"
     )
