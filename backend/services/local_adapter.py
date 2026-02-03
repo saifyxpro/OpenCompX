@@ -266,4 +266,4 @@ def start_container():
 
 def get_novnc_url(port: int = 6080) -> str:
     """Get the noVNC URL for the local container."""
-    return f"http://localhost:{port}/vnc.html?autoconnect=true"
+    return f"http://localhost:{port}/vnc.html?autoconnect=true&resize=scale&password=agent"
