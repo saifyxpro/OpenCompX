@@ -161,10 +161,12 @@ class AgentWrapper:
             for act in action:
                 # HEURISTIC REPAIR: Detect "Start Menu -> Type -> Enter" pattern
                 # If agent tries to key-press its way to an app, force-upgrade to launch()
-                if "hotkey('win')" in act and "write" in act:
-                    import re
+                # Use regex to handle 'win', "win", 'super', etc.
+                import re
+                legacy_pattern = r"(hotkey|press)\s*\(\s*[\[\(]?\s*(['\"](win|super|windows)['\"])"
+                if re.search(legacy_pattern, act, re.IGNORECASE) and "write" in act:
                     # extract app name from write('Name')
-                    match = re.search(r"write\(['\"](.+?)['\"]\)", act)
+                    match = re.search(r"write\s*\(\s*['\"](.+?)['\"]\s*\)", act, re.IGNORECASE)
                     if match:
                         app_name = match.group(1).lower()
                         print(f"Intercepting legacy open pattern: converting to launch('{app_name}')")
