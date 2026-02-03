@@ -153,19 +153,18 @@ class E2BAdapter:
     # --- Application/URL Launchers (CUA2 Style) ---
     def launch(self, app):
         logger.info(f"E2B Launch: {app}")
-        # Run in background to not block
-        self.sandbox.commands.run(f"{app}", background=True)
+        # Force DISPLAY=:0 and use nohup to prevent SIGHUP/closing
+        cmd = f"export DISPLAY=:0; nohup {app} > /tmp/launch_{app}.log 2>&1 &"
+        self.sandbox.commands.run(cmd, background=True)
 
     def open_url(self, url):
         logger.info(f"E2B Open URL: {url}")
-        # E2B Sandbox has .open() but sometimes it's better to just run firefox
         if not url.startswith("http"):
              url = f"https://{url}"
         
-        # Try native .open if available (it opens in default browser)
-        # self.sandbox.open(url) 
-        # Actually CUA2 uses self.desktop.open(url) but let's be explicit with firefox for Linux
-        self.sandbox.commands.run(f"firefox {url}", background=True)
+        # Explicit firefox launch with display
+        cmd = f"export DISPLAY=:0; nohup firefox '{url}' > /tmp/firefox_launch.log 2>&1 &"
+        self.sandbox.commands.run(cmd, background=True)
 
     # --- Utils ---
     def position(self):

@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from e2b_desktop import Sandbox
 
 # Import adapter
-from backend.agent.adapter import E2BAdapter
+from backend.services.e2b_adapter import E2BAdapter
 
 # Try importing from gui_agents
 try:
@@ -19,12 +19,12 @@ except ImportError as e:
     AgentS3 = None
     OSWorldACI = None
 
-class AgentWrapper:
+class AgentService:
     def __init__(self):
         load_dotenv()
         
         self.provider = "openai"
-        self.model = "gpt-5-2025-08-07"
+        self.model = "gpt-5.2-2025-12-11"
         
         # Grounding Config (UI-TARS local)
         self.ground_provider = "openai" # Using OpenAI-compatible vLLM API
