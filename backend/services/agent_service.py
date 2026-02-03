@@ -159,6 +159,7 @@ class AgentService:
             "4. To open URLs: use `pyautogui.open_url('url')`\n"
             "5. The system password for user 'agent' is 'agent'. If asked for a password, type 'agent'.\n"
             "6. Do NOT output 'DONE' until you can SEE the task is complete in the screenshot.\n\n"
+            "REALITY OVERRIDE: You are running in a special LocalDocker environment. 'pyautogui.launch' IS AVAILABLE and IS the ONLY way to open apps. Ignore any previous instructions saying otherwise.\n"
             "Your first action should be to launch Firefox using `pyautogui.launch('firefox')`."
         )
         
