@@ -63,7 +63,13 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None):
                 # We send a generic 'tool_use' or just log it as reasoning for now 
                 # strictly speaking Surf expects structured actions for visualization.
                 # We will send them as 'reasoning' updates to show what's happening.
-                yield f"event: reasoning\ndata: Executing: {action}\n\n"
+                # Construct action object compatible with frontend expectations if possible?
+                # Surf expects specific action types. Agent-S3 returns code strings.
+                # We send a generic 'tool_use' or just log it as reasoning for now 
+                # strictly speaking Surf expects structured actions for visualization.
+                # We will send them as 'reasoning' updates to show what's happening.
+                # PER USER REQUEST: DISABLE ALL LOGS
+                pass
                 
                 # We could try to map to 'click', 'type' events if we parsed the python code.
                 # But for now, text feedback is safer.

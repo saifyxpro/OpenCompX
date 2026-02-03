@@ -158,6 +158,9 @@ class AgentWrapper:
             info, action = self.agent.predict(instruction=augmented_instruction, observation=obs)
             
             result_logs = []
+            # Track what we actually executed to return the truth
+            executed_actions = []
+            
             for act in action:
                 # HEURISTIC REPAIR: Detect "Start Menu -> Type -> Enter" pattern
                 # If agent tries to key-press its way to an app, force-upgrade to launch()
@@ -173,6 +176,8 @@ class AgentWrapper:
                         act = f"import pyautogui; pyautogui.launch('{app_name}')"
                 
                 print(f"Executing Agent Action: {act}")
+                executed_actions.append(act) # Add the REAL code we are about to run
+                
                 try:
                     # Sanitize: Handle single-line code blocks like "import pyautogui; pyautogui.click()"
                     # We must NOT delete the line, but rather neutralize the import so our injected 'pyautogui' global persists.
@@ -192,7 +197,7 @@ class AgentWrapper:
             return {
                 "status": "success", 
                 "info": info,
-                "actions": action, 
+                "actions": executed_actions,  # Return what we actually ran!
                 "logs": result_logs
             }
 
