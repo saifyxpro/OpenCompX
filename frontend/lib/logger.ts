@@ -3,7 +3,11 @@ import ansis from "ansis";
 export const logger = console;
 
 const stringifyArg = (arg: unknown) =>
-  typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg);
+  arg instanceof Error
+    ? `${arg.message}\n${arg.stack}`
+    : typeof arg === "object"
+      ? JSON.stringify(arg, null, 2)
+      : String(arg);
 
 export const logError = (...args: Parameters<typeof console.error>) => {
   console.error(
