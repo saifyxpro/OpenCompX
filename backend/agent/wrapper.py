@@ -109,24 +109,22 @@ class AgentWrapper:
 
         # Capture screenshot from E2B
         try:
-            # Execute python script inside sandbox to take screenshot and return base64
-            # This avoids dependency on 'scrot' tool availability
-            cmd = "python3 -c \"import pyautogui, base64, io; b = io.BytesIO(); pyautogui.screenshot().save(b, format='PNG'); print(base64.b64encode(b.getvalue()).decode())\""
+            # Use native E2B SDK screenshot method (v1.5.0+)
+            # Returns bytearray
+            screenshot_bytes = self.sandbox.screenshot(format="bytes")
             
-            # Run command in sandbox
-            result = self.sandbox.commands.run(cmd)
-            
-            if result.stdout:
-                import base64
+            if screenshot_bytes:
                 obs = {
-                    "screenshot": base64.b64decode(result.stdout.strip())
+                    "screenshot": bytes(screenshot_bytes)
                 }
             else:
-                print(f"Screenshot capture failed. stderr: {result.stderr}")
+                print("Screenshot captured but empty.")
                 obs = {"screenshot": b""}
                 
         except Exception as e:
             print(f"Screenshot exception: {e}")
+            import traceback
+            traceback.print_exc()
             obs = {"screenshot": b""}
 
         if not self.agent:

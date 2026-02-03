@@ -12,14 +12,14 @@ class E2BAdapter:
     """
     def __init__(self, sandbox: Sandbox):
         self.sandbox = sandbox
-        self._check_connection()
+        # self._check_connection() # .params() not available in 1.5.0
 
-    def _check_connection(self):
-        try:
-            # Simple check to ensure sandbox is responsive
-            self.sandbox.params() 
-        except Exception as e:
-            logger.error(f"E2B Sandbox connection failed: {e}")
+    # def _check_connection(self):
+    #     try:
+    #         # Simple check to ensure sandbox is responsive
+    #         self.sandbox.params() 
+    #     except Exception as e:
+    #         logger.error(f"E2B Sandbox connection failed: {e}")
 
     # --- Mouse Functions ---
     def click(self, x=None, y=None, clicks=1, interval=0.0, button='left', **kwargs):
