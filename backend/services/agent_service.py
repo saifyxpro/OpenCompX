@@ -118,6 +118,7 @@ class AgentService:
             "grounding_height": self.ground_height,
         }
 
+        print(f"Initializing OSWorldACI with Grounding URL: {self.ground_url} | Model: {self.ground_model}")
         self.grounding_agent = OSWorldACI(
             env=None,
             platform="linux",
