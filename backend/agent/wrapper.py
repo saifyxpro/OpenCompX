@@ -46,10 +46,19 @@ class AgentWrapper:
                 raise ValueError("E2B_API_KEY is missing or invalid in backend/.env")
 
             print("Initializing E2B Sandbox...")
-            self.sandbox = Sandbox()
+            # Use the robust template from CUA2 (Ubuntu + XFCE + Desktop Tools)
+            # This ensures xfce4-popup-whiskermenu and other tools are available
+            self.sandbox = Sandbox(template="k0wmnzir0zuzye6dndlw")
+            
             # Start stream to get URL
             self.sandbox.stream.start()
-            time.sleep(2) # Wait for stream
+            
+            # Run CUA2 Cleanup/Setup Command for Firefox (prevents first-run wizards)
+            print("Configuring Sandbox Environment...")
+            setup_cmd = """sudo mkdir -p /usr/lib/firefox-esr/distribution && echo '{"policies":{"OverrideFirstRunPage":"","OverridePostUpdatePage":"","DisableProfileImport":true,"DontCheckDefaultBrowser":true}}' | sudo tee /usr/lib/firefox-esr/distribution/policies.json > /dev/null"""
+            self.sandbox.commands.run(setup_cmd)
+            
+            time.sleep(2) # Wait for stream and setup
             self.vnc_url = self.sandbox.stream.get_url()
             print(f"Sandbox created! VNC: {self.vnc_url}")
             
@@ -150,6 +159,17 @@ class AgentWrapper:
             
             result_logs = []
             for act in action:
+                # HEURISTIC REPAIR: Detect "Start Menu -> Type -> Enter" pattern
+                # If agent tries to key-press its way to an app, force-upgrade to launch()
+                if "hotkey('win')" in act and "write" in act:
+                    import re
+                    # extract app name from write('Name')
+                    match = re.search(r"write\(['\"](.+?)['\"]\)", act)
+                    if match:
+                        app_name = match.group(1).lower()
+                        print(f"Intercepting legacy open pattern: converting to launch('{app_name}')")
+                        act = f"import pyautogui; pyautogui.launch('{app_name}')"
+                
                 print(f"Executing Agent Action: {act}")
                 try:
                     # Sanitize: Handle single-line code blocks like "import pyautogui; pyautogui.click()"
