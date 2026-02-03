@@ -167,14 +167,16 @@ class AgentService:
         all_logs = []
         all_actions = []
         
-        # Augment instruction once
+        # Augment instruction - CRITICAL: Must tell agent to do ONE step at a time
         augmented_instruction = (
             f"{instruction}\n\n"
-            "IMPORTANT: To open applications or websites, do NOT click icons. "
-            "Use the provided python functions directly:\n"
-            "- pyautogui.launch('app_name')  (e.g. 'firefox', 'xfce4-terminal')\n"
-            "- pyautogui.open_url('url')     (e.g. 'google.com')\n"
-            "Use these functions immediately if the task requires opening something."
+            "CRITICAL INSTRUCTIONS:\n"
+            "1. Execute ONLY ONE action at a time, then wait for the next screenshot.\n"
+            "2. Do NOT plan multiple steps ahead - just do the NEXT single action.\n"
+            "3. To open applications: use pyautogui.launch('app_name')\n"
+            "4. To open URLs: use pyautogui.open_url('url')\n"
+            "5. Do NOT output 'DONE' until you can SEE the task is complete in the screenshot.\n\n"
+            "Your first action should be to launch Firefox."
         )
         
         for step_num in range(MAX_STEPS):
@@ -198,13 +200,24 @@ class AgentService:
                 print(f"  action count: {len(action) if action else 0}")
                 print(f"  actions: {action}")
                 
-                # Check if agent signals completion
-                if info and isinstance(info, dict):
-                    # Agent S3 might signal done via info dict
-                    if info.get("done") or info.get("completed") or "DONE" in str(info).upper():
-                        all_logs.append("Task completed!")
-                        print("Agent signaled DONE")
-                        break
+                # Check if action is just "DONE" or "FAIL" - these are not real actions
+                if action and len(action) == 1:
+                    single_action = action[0].strip().upper()
+                    if single_action == "DONE":
+                        print("Agent returned DONE - checking if premature...")
+                        # If step 1, this is premature - agent didn't do anything
+                        if step_num == 0:
+                            print("WARNING: Premature DONE on step 1! Skipping and retrying...")
+                            all_logs.append("Agent tried to exit early, retrying...")
+                            continue
+                        else:
+                            all_logs.append("Task completed!")
+                            print("Agent signaled DONE after doing work")
+                            break
+                    elif single_action == "FAIL":
+                        print("Agent returned FAIL - skipping")
+                        all_logs.append("Agent encountered difficulty, continuing...")
+                        continue
                 
                 # Check if no actions (agent might be stuck)
                 if not action or len(action) == 0:
@@ -212,8 +225,13 @@ class AgentService:
                     all_logs.append("I've completed what I can see to do.")
                     break
                 
-                # 3. Execute each action
+                # 3. Execute each action (filter out DONE/FAIL if mixed with real actions)
                 for act in action:
+                    act_upper = act.strip().upper()
+                    if act_upper in ["DONE", "FAIL"]:
+                        print(f"  Skipping meta-action: {act}")
+                        continue
+                    
                     # NOTE: We removed the aggressive "legacy pattern" interception
                     # because it was breaking valid hotkey sequences like Ctrl+L for address bar
                     
