@@ -325,6 +325,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
         }
       }
     } catch (error) {
+      if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('aborted'))) {
+        logDebug("Generation stopped by user.");
+        setIsLoading(false);
+        return;
+      }
       logError("Error sending message:", error);
       setError(error instanceof Error ? error.message : "An error occurred");
       setIsLoading(false);
@@ -339,6 +344,10 @@ export function ChatProvider({ children }: ChatProviderProps) {
         );
         setIsLoading(false);
       } catch (error) {
+        if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('aborted'))) {
+          // Ignore abort errors
+          return;
+        }
         logError("Error stopping generation:", error);
         setIsLoading(false);
       }

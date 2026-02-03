@@ -20,17 +20,16 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Surf - E2B Computer Use Agent",
+  title: "OpenCompX - AI Computer Agent",
   description:
-    "AI agent that interacts with a virtual desktop environment through natural language instructions",
+    "Next-generation AI agent that intelligently controls your computer environment.",
   keywords: [
+    "OpenCompX",
     "AI",
-    "desktop",
-    "automation",
-    "E2B",
-    "OpenAI",
-    "virtual desktop",
-    "sandbox",
+    "Agent",
+    "Computer Use",
+    "Automation",
+    "Task",
   ],
   authors: [{ name: "E2B", url: "https://e2b.dev" }],
 };

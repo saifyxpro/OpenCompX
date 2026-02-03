@@ -13,14 +13,16 @@
   --fg-400: hsl(0 0% 37%);
   --fg-500: hsl(0 0% 45%);
 
-  --accent: hsl(32 100% 50%);
-  --accent-100: hsl(32 95% 55%);
-  --accent-200: hsl(32 90% 60%);
-  --accent-300: hsl(32 85% 65%);
-  --accent-400: hsl(32 80% 70%);
-  --accent-500: hsl(32 75% 75%);
+  /* Premium Blue Theme */
+  --accent: hsl(221 83% 53%);
+  /* #175CEB */
+  --accent-100: hsl(221 90% 60%);
+  --accent-200: hsl(221 95% 65%);
+  --accent-300: hsl(221 100% 70%);
+  --accent-400: hsl(221 100% 75%);
+  --accent-500: hsl(221 100% 80%);
 
-  --accent-fg: hsl(45 20% 95%);
+  --accent-fg: hsl(210 40% 98%);
 
   --border: hsl(0 0% 90%);
   --border-100: hsl(0 0% 85%);
@@ -74,14 +76,15 @@
   --fg-400: hsl(0 0% 66%);
   --fg-500: hsl(0 0% 60%);
 
-  --accent: hsl(32 100% 45%);
-  --accent-100: hsl(32 100% 40%);
-  --accent-200: hsl(32 100% 30%);
-  --accent-300: hsl(32 100% 20%);
-  --accent-400: hsl(32 100% 10%);
-  --accent-500: hsl(32 100% 5%);
+  /* Premium Blue Dark Mode */
+  --accent: hsl(221 83% 58%);
+  --accent-100: hsl(221 83% 53%);
+  --accent-200: hsl(221 83% 48%);
+  --accent-300: hsl(221 83% 43%);
+  --accent-400: hsl(221 83% 38%);
+  --accent-500: hsl(221 83% 33%);
 
-  --accent-fg: hsl(0 0% 100%);
+  --accent-fg: hsl(221 83% 95%);
 
   --border: hsl(0 0% 10%);
   --border-100: hsl(0 0% 13%);

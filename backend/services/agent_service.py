@@ -25,8 +25,8 @@ class AgentService:
     def __init__(self):
         load_dotenv()
         
-        self.provider = "openai"
-        self.model = "gpt-5.2-2025-12-11"
+        self.provider = os.getenv("LLM_PROVIDER", "google")
+        self.model = os.getenv("LLM_MODEL", "gemini-3-flash-preview")
         
         # Grounding Config (UI-TARS local)
         self.ground_provider = "openai"
@@ -102,12 +102,21 @@ class AgentService:
             return b""
 
     def _init_agent(self):
-        engine_params = {
-            "engine_type": self.provider,
-            "model": self.model,
-            "api_key": os.getenv("OPENAI_API_KEY"),
-            "temperature": 1.0
-        }
+        if self.provider == "google":
+             engine_params = {
+                "engine_type": "google",
+                "model": self.model, # gemini-3-flash-preview
+                "api_key": os.getenv("GEMINI_API_KEY"), # New key
+                "thinking_level": "HIGH", # For Gemini 3 Flash
+                "temperature": 1.0
+            }
+        else:
+            engine_params = {
+                "engine_type": self.provider,
+                "model": self.model,
+                "api_key": os.getenv("OPENAI_API_KEY"),
+                "temperature": 1.0
+            }
 
         engine_params_for_grounding = {
             "engine_type": self.ground_provider,

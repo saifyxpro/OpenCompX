@@ -1,6 +1,6 @@
-# 🚀 OpenManus Production Setup
+# 🚀 OpenCompX Production Setup
 
-Run the entire OpenManus stack (Frontend + Backend) with a single command using Docker Compose.
+Run the entire **OpenCompX** stack (Frontend + Backend) within a production Docker environment.
 
 ## Prerequisites
 
@@ -11,8 +11,12 @@ Run the entire OpenManus stack (Frontend + Backend) with a single command using 
 ## 📦 How to Run
 
 1.  **Configure Environment:**
-    Ensure `backend/.env` is set up (API Keys, Vision URL).
-    *   If vLLM is on the host, use `http://host.docker.internal:8080/v1` or the cloud URL.
+    Ensure `backend/.env` is set up with your preferred provider:
+    ```ini
+    LLM_PROVIDER=google
+    LLM_MODEL=gemini-3-flash-preview
+    GOOGLE_API_KEY=AIza...
+    ```
 
 2.  **Start Services:**
     ```bash
