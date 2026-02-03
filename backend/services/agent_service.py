@@ -199,6 +199,10 @@ class AgentService:
             enable_reflection=True
         )
         print("Agent S3 Initialized!")
+        print("Waiting 5 seconds for desktop to fully load...")
+        time.sleep(5)
+        print("Ready to execute tasks!")
+
 
     def step(self, instruction: str):
         """Run the agent in a loop until task is complete or max steps reached."""
