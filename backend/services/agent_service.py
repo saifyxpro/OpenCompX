@@ -157,7 +157,8 @@ class AgentService:
             "2. Do NOT plan multiple steps ahead - just do the NEXT single action.\n"
             "3. To open applications: use pyautogui.launch('app_name')\n"
             "4. To open URLs: use pyautogui.open_url('url')\n"
-            "5. Do NOT output 'DONE' until you can SEE the task is complete in the screenshot.\n\n"
+            "5. The system password for user 'agent' is 'agent'. If asked for a password, type 'agent'.\n"
+            "6. Do NOT output 'DONE' until you can SEE the task is complete in the screenshot.\n\n"
             "Your first action should be to launch Firefox."
         )
         

@@ -51,6 +51,23 @@ export DISPLAY=:1\n\
 export HOME=/home/agent\n\
 rm -rf /tmp/.X1-lock /tmp/.X11-unix/X1 2>/dev/null\n\
 vncserver :1 -geometry $VNC_RESOLUTION -depth $VNC_COL_DEPTH -localhost no\n\
+sleep 5\n\
+export DISPLAY=:1\n\
+xset s off\n\
+xset -dpms\n\
+xset s noblank\n\
+# Aggressively disable XFCE power management and locking\n\
+xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/presentation-mode -s true\n\
+xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/blank-on-ac -s 0\n\
+xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/dpms-on-ac-sleep -s 0\n\
+xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/dpms-on-ac-off -s 0\n\
+xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/lock-screen-suspend-hibernate -s false\n\
+xfconf-query -c xfce4-session -p /sessions/ScreensaverMode -s 0\n\
+xfconf-query -c xfce4-screensaver -p /saver/enabled -s false\n\
+xfconf-query -c xfce4-screensaver -p /lock/enabled -s false\n\
+# Kill any existing lockers\n\
+pkill light-locker || true\n\
+pkill xfce4-screensaver || true\n\
 websockify --web=/usr/share/novnc/ $NO_VNC_PORT localhost:$VNC_PORT &\n\
 tail -f /dev/null\n\
 ' > /startup.sh && chmod +x /startup.sh
