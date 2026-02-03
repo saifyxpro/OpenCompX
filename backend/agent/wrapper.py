@@ -12,8 +12,10 @@ from backend.agent.adapter import E2BAdapter
 try:
     from gui_agents.s3.agents.agent_s import AgentS3
     from gui_agents.s3.agents.grounding import OSWorldACI
-except ImportError:
-    print("WARNING: gui_agents not installed.")
+except ImportError as e:
+    import traceback
+    print(f"CRITICAL WARNING: gui_agents failed to import: {e}")
+    traceback.print_exc()
     AgentS3 = None
     OSWorldACI = None
 

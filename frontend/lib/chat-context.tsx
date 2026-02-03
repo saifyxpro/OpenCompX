@@ -57,26 +57,42 @@ export function ChatProvider({ children }: ChatProviderProps) {
         return null;
       }
 
-      if (data.startsWith("data: ")) {
-        const jsonStr = data.substring(6).trim();
+      // Handle cases where data comes with "data: " prefix
+      let cleanData = data;
 
-        if (!jsonStr) {
-          return null;
+      // If the chunk contains "event:", it might be a multiline SSE block.
+      // We are interested in the "data:" part.
+      if (data.includes("data:")) {
+        const lines = data.split("\n");
+        for (const line of lines) {
+          if (line.startsWith("data:")) {
+            cleanData = line.substring(5).trim();
+            break;
+          }
         }
-
-        return JSON.parse(jsonStr);
+      } else if (data.startsWith("data: ")) {
+        cleanData = data.substring(6).trim();
       }
 
-      const match = data.match(/data: ({.*})/);
-      if (match && match[1]) {
-        return JSON.parse(match[1]);
+      if (!cleanData) {
+        return null;
       }
 
-      return JSON.parse(data);
-    } catch (e) {
+      // Try parsing as JSON
+      try {
+        return JSON.parse(cleanData);
+      } catch (e) {
+        // If not JSON, check if we have an event type from the block (optional enhancement)
+        // For now, treat plain text as reasoning/content if it's not a system/error message
+        return {
+          type: SSEEventType.REASONING,
+          content: cleanData
+        } as any;
+      }
+    } catch (error) {
       logError(
         "Error parsing SSE event:",
-        e,
+        error,
         "Data:",
         data.substring(0, 200) + (data.length > 200 ? "..." : "")
       );
