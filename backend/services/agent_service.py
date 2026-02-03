@@ -221,6 +221,9 @@ class AgentService:
                         sanitized_act = act
                         sanitized_act = sanitized_act.replace("import subprocess", "pass")
                         sanitized_act = sanitized_act.replace("subprocess.run", "# subprocess.run")
+                        # CRITICAL: Remove 'import pyautogui' to prevent overwriting our adapter
+                        sanitized_act = sanitized_act.replace("import pyautogui;", "pass;")
+                        sanitized_act = sanitized_act.replace("import pyautogui", "pass")
                         
                         # Execute with adapter as pyautogui
                         import subprocess as _subprocess
