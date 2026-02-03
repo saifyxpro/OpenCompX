@@ -27,7 +27,8 @@ class AgentWrapper:
         # Grounding Config (UI-TARS local)
         self.ground_provider = "openai" # Using OpenAI-compatible vLLM API
         self.ground_url = os.getenv("VISION_SERVICE_URL", "http://localhost:8080/v1")
-        self.ground_model = "ui-tars-1.5-7b"
+        # Default to the full HuggingFace ID as vLLM usually requires it
+        self.ground_model = os.getenv("VISION_MODEL", "ByteDance-Seed/UI-TARS-1.5-7B")
         self.ground_width = 1920
         self.ground_height = 1080
 
