@@ -159,7 +159,7 @@ class E2BAdapter:
             "firefox": "firefox-esr",
             "libreoffice": "libreoffice",
             "libreoffice-calc": "libreoffice --calc",
-            "libreoffice--calc": "libreoffice --calc",  # Handle typo
+            "libreoffice--calc": "libreoffice --calc",
             "calc": "libreoffice --calc",
             "terminal": "xfce4-terminal",
             "xterm": "xterm",
@@ -167,20 +167,48 @@ class E2BAdapter:
         
         actual_app = app_map.get(app.lower(), app)
         
-        # Force DISPLAY=:0 and use nohup to prevent SIGHUP/closing
-        cmd = f"export DISPLAY=:0; nohup {actual_app} > /tmp/launch_{app}.log 2>&1 &"
+        # Try multiple approaches for robustness
+        # 1. First try with setsid to detach from terminal
+        cmd = f"export DISPLAY=:0; setsid {actual_app} &"
         logger.info(f"E2B Launch Command: {cmd}")
-        self.sandbox.commands.run(cmd, background=True)
+        
+        try:
+            # Run synchronously to capture any immediate errors
+            result = self.sandbox.commands.run(cmd, timeout=5)
+            logger.info(f"Launch result: stdout={result.stdout}, stderr={result.stderr}")
+        except Exception as e:
+            logger.error(f"Launch failed: {e}")
+            # Fallback: try with nohup
+            try:
+                fallback_cmd = f"export DISPLAY=:0; nohup {actual_app} > /tmp/launch.log 2>&1 &"
+                self.sandbox.commands.run(fallback_cmd, background=True)
+            except Exception as e2:
+                logger.error(f"Fallback launch also failed: {e2}")
+        
+        # Give the app time to start
+        time.sleep(1)
 
     def open_url(self, url):
         logger.info(f"E2B Open URL: {url}")
         if not url.startswith("http"):
              url = f"https://{url}"
         
-        # Use firefox-esr on Debian/Ubuntu
-        cmd = f"export DISPLAY=:0; nohup firefox-esr '{url}' > /tmp/firefox_launch.log 2>&1 &"
-        logger.info(f"E2B Open URL Command: {cmd}")
-        self.sandbox.commands.run(cmd, background=True)
+        # Try multiple browsers in order of preference
+        browsers = ["firefox-esr", "firefox", "chromium", "google-chrome"]
+        
+        for browser in browsers:
+            try:
+                cmd = f"export DISPLAY=:0; setsid {browser} '{url}' &"
+                logger.info(f"Trying browser: {cmd}")
+                result = self.sandbox.commands.run(cmd, timeout=5)
+                logger.info(f"Browser result: {result.stdout}, {result.stderr}")
+                time.sleep(1)
+                return  # Success, exit
+            except Exception as e:
+                logger.warning(f"{browser} failed: {e}")
+                continue
+        
+        logger.error("All browsers failed to launch!")
 
     # --- Utils ---
     def position(self):

@@ -69,6 +69,13 @@ class AgentService:
             setup_cmd = """sudo mkdir -p /usr/lib/firefox-esr/distribution && echo '{"policies":{"OverrideFirstRunPage":"","OverridePostUpdatePage":"","DisableProfileImport":true,"DontCheckDefaultBrowser":true}}' | sudo tee /usr/lib/firefox-esr/distribution/policies.json > /dev/null"""
             self.sandbox.commands.run(setup_cmd)
             
+            # DEBUG: Check what browsers are available
+            try:
+                check_result = self.sandbox.commands.run("which firefox-esr firefox chromium google-chrome 2>/dev/null || echo 'No browsers found'")
+                print(f"Available browsers: {check_result.stdout}")
+            except Exception as e:
+                print(f"Browser check failed: {e}")
+            
             # Wait for desktop to be actually ready (prevent black screen issues)
             self._wait_for_desktop_ready()
             
