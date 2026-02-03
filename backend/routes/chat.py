@@ -22,17 +22,17 @@ class ChatRequest(BaseModel):
 async def event_generator(instruction: str, existing_sandbox_id: str | None, resolution: list[int] | None):
     """Generate SSE events with proper structured format for frontend consumption."""
     
-    # 1. Initialize Sandbox if needed
-    if not agent_service.container_running:
-         res = resolution if resolution and len(resolution) == 2 else None
-         info = agent_service.initialize_sandbox(resolution=res)
-         # Yield sandbox info - CRITICAL: frontend needs sandboxId and vncUrl
-         yield f"event: sandbox_created\ndata: {json.dumps({'sandboxId': info['sandbox_id'], 'vncUrl': info['vnc_url']})}\n\n"
-    
-    # 2. Start Agent Step
-    yield f"event: reasoning\ndata: {json.dumps({'content': 'Analyzing screen and planning actions...'})}\n\n"
-    
     try:
+        # 1. Initialize Sandbox if needed
+        if not agent_service.container_running:
+             res = resolution if resolution and len(resolution) == 2 else None
+             info = agent_service.initialize_sandbox(resolution=res)
+             # Yield sandbox info - CRITICAL: frontend needs sandboxId and vncUrl
+             yield f"event: sandbox_created\ndata: {json.dumps({'sandboxId': info['sandbox_id'], 'vncUrl': info['vnc_url']})}\n\n"
+        
+        # 2. Start Agent Step
+        yield f"event: reasoning\ndata: {json.dumps({'content': 'Analyzing screen and planning actions...'})}\n\n"
+        
         # Run agent step (blocking, uses thread pool)
         result = await asyncio.to_thread(agent_service.step, instruction)
         
