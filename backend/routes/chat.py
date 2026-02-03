@@ -20,45 +20,68 @@ class ChatRequest(BaseModel):
         extra = "ignore"
 
 async def event_generator(instruction: str, existing_sandbox_id: str | None, resolution: list[int] | None):
+    """Generate SSE events with proper structured format for frontend consumption."""
+    
     # 1. Initialize Sandbox if needed
     if not agent_service.sandbox:
-         # Pass resolution ensuring it checks for None
          res = resolution if resolution and len(resolution) == 2 else None
          info = agent_service.initialize_sandbox(resolution=res)
-         # Yield sandbox info
+         # Yield sandbox info - CRITICAL: frontend needs sandboxId and vncUrl
          yield f"event: sandbox_created\ndata: {json.dumps({'sandboxId': info['sandbox_id'], 'vncUrl': info['vnc_url']})}\n\n"
     
-    # 2. Run Agent Step
-    yield f"event: reasoning\ndata: Processing instruction...\n\n"
+    # 2. Start Agent Step
+    yield f"event: reasoning\ndata: {json.dumps({'content': 'Analyzing screen and planning actions...'})}\n\n"
     
     try:
-        # This is blocking, might take seconds
+        # Run agent step (blocking, uses thread pool)
         result = await asyncio.to_thread(agent_service.step, instruction)
         
         if result["status"] == "error":
-             yield f"event: error\ndata: {result['message']}\n\n"
+             yield f"event: error\ndata: {json.dumps({'content': result['message']})}\n\n"
              return
 
-        # Yield Reasoning (Info)
+        # 3. Yield Agent's reasoning/plan if available
         if result.get("info"):
-             yield f"event: reasoning\ndata: {json.dumps(result['info'])}\n\n"
+             plan = result["info"].get("plan", "")
+             if plan:
+                 yield f"event: reasoning\ndata: {json.dumps({'content': plan})}\n\n"
 
-        # Yield Execution Logs (Human-Like)
-        if result.get("logs"):
-            for log in result["logs"]:
-                yield f"event: reasoning\ndata: {log}\n\n"
+        # 4. Yield each action with structured format for UI action cards
+        actions = result.get("actions", [])
+        logs = result.get("logs", [])
         
-        # Actions are handled in logs now, but if we need structured actions later:
-        if result.get("actions"):
-             pass 
+        for i, action in enumerate(actions):
+            # Send action event - frontend will show pending action card
+            action_payload = {
+                "type": "computer_action",
+                "action_type": "execute",
+                "code": action
+            }
+            yield f"event: action\ndata: {json.dumps({'action': action_payload})}\n\n"
+            
+            # Small delay to make UI feel responsive
+            await asyncio.sleep(0.1)
+            
+            # Send corresponding log as reasoning
+            if i < len(logs):
+                yield f"event: reasoning\ndata: {json.dumps({'content': logs[i]})}\n\n"
+            
+            # Send action_completed event - frontend will update card to completed
+            yield f"event: action_completed\ndata: {json.dumps({})}\n\n"
+        
+        # 5. If there are more logs than actions (status messages)
+        for log in logs[len(actions):]:
+            yield f"event: reasoning\ndata: {json.dumps({'content': log})}\n\n"
 
-        yield f"event: done\ndata: [DONE]\n\n"
+        # 6. Done
+        yield f"event: done\ndata: {json.dumps({'content': 'Task completed'})}\n\n"
 
     except Exception as e:
-        yield f"event: error\ndata: {str(e)}\n\n"
+        yield f"event: error\ndata: {json.dumps({'content': str(e)})}\n\n"
 
 @router.post("/chat")
 async def chat(request: ChatRequest):
+    """Handle chat requests and stream responses."""
     # Extract latest user message
     last_message = request.messages[-1]["content"]
     
@@ -66,3 +89,4 @@ async def chat(request: ChatRequest):
         event_generator(last_message, request.sandboxId, request.resolution),
         media_type="text/event-stream"
     )
+

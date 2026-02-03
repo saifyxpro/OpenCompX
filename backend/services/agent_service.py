@@ -113,6 +113,52 @@ class AgentService:
                 time.sleep(2)
         print("Warning: Desktop might not be fully ready, proceeding anyway.")
 
+    def _take_screenshot(self) -> bytes:
+        """Robust screenshot with fallbacks for display issues."""
+        # Try E2B SDK first (preferred)
+        try:
+            screenshot_bytes = self.sandbox.screenshot(format="bytes")
+            if screenshot_bytes and len(screenshot_bytes) > 1000:
+                return bytes(screenshot_bytes)
+        except Exception as e:
+            print(f"E2B screenshot failed: {e}")
+        
+        # Fallback 1: Reset DISPLAY and try scrot
+        try:
+            print("Trying scrot fallback with DISPLAY reset...")
+            result = self.sandbox.commands.run(
+                "export DISPLAY=:0 && scrot -o /tmp/screen.png && cat /tmp/screen.png",
+                timeout=10
+            )
+            if result.stdout:
+                return result.stdout.encode('latin-1') if isinstance(result.stdout, str) else result.stdout
+        except Exception as e:
+            print(f"Scrot fallback failed: {e}")
+        
+        # Fallback 2: Try import command (ImageMagick)
+        try:
+            print("Trying ImageMagick import fallback...")
+            result = self.sandbox.commands.run(
+                "export DISPLAY=:0 && import -window root png:- 2>/dev/null",
+                timeout=15
+            )
+            if result.stdout:
+                return result.stdout.encode('latin-1') if isinstance(result.stdout, str) else result.stdout
+        except Exception as e:
+            print(f"ImageMagick fallback failed: {e}")
+        
+        # Fallback 3: Restart display server
+        try:
+            print("WARNING: Display appears dead, attempting restart...")
+            self.sandbox.commands.run("export DISPLAY=:0 && xdotool key Escape", timeout=5)
+        except:
+            pass
+        
+        # Return empty bytes as last resort
+        print("All screenshot methods failed, returning empty screenshot")
+        return b""
+
+
     def _init_agent(self):
         engine_params = {
             "engine_type": self.provider,
@@ -185,13 +231,9 @@ class AgentService:
             print(f"AGENT STEP {step_num + 1}/{MAX_STEPS}")
             print(f"{'='*60}")
             
-            # 1. Capture screenshot
-            try:
-                screenshot_bytes = self.sandbox.screenshot(format="bytes")
-                obs = {"screenshot": bytes(screenshot_bytes) if screenshot_bytes else b""}
-            except Exception as e:
-                print(f"Screenshot error: {e}")
-                obs = {"screenshot": b""}
+            # 1. Capture screenshot using robust helper with fallbacks
+            screenshot_bytes = self._take_screenshot()
+            obs = {"screenshot": screenshot_bytes}
             
             # 2. Call agent predict
             try:
