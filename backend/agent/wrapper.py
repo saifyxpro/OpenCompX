@@ -141,9 +141,15 @@ class AgentWrapper:
             for act in action:
                 print(f"Executing Agent Action: {act}")
                 try:
+                    # Sanitize: Remove 'import pyautogui' lines to prevent overwriting our injected adapter
+                    lines = act.split('\n')
+                    # Keep lines that are NOT imports of pyautogui
+                    sanitized_lines = [l for l in lines if not l.strip().startswith("import pyautogui") and "from pyautogui" not in l]
+                    sanitized_act = '\n'.join(sanitized_lines)
+
                     # THE MAGIC: Execute code but inject our adapter as 'pyautogui'
                     exec_globals = {"pyautogui": self.adapter, "time": time}
-                    exec(act, exec_globals)
+                    exec(sanitized_act, exec_globals)
                     result_logs.append(f"Executed: {act}")
                 except Exception as e:
                     result_logs.append(f"Error: {e}")

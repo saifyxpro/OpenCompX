@@ -57,17 +57,17 @@ export function ChatProvider({ children }: ChatProviderProps) {
         return null;
       }
 
-      // Handle cases where data comes with "data: " prefix
+      let eventType: string | null = null;
       let cleanData = data;
 
-      // If the chunk contains "event:", it might be a multiline SSE block.
-      // We are interested in the "data:" part.
-      if (data.includes("data:")) {
+      // Parse lines to find 'event:' and 'data:'
+      if (data.includes("\n")) {
         const lines = data.split("\n");
         for (const line of lines) {
-          if (line.startsWith("data:")) {
+          if (line.startsWith("event:")) {
+            eventType = line.substring(6).trim();
+          } else if (line.startsWith("data:")) {
             cleanData = line.substring(5).trim();
-            break;
           }
         }
       } else if (data.startsWith("data: ")) {
@@ -80,12 +80,26 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
       // Try parsing as JSON
       try {
-        return JSON.parse(cleanData);
+        const parsed = JSON.parse(cleanData);
+
+        // If we found an event type header, force it onto the object
+        // This handles cases like "event: sandbox_created" where the data doesn't contain the type
+        if (eventType) {
+          // Map backend event names to frontend enum if needed, or assume match
+          // Backend sends: sandbox_created, reasoning, action, done, error
+          // Frontend keys: SANDBOX_CREATED="sandbox_created", etc.
+          return {
+            ...parsed,
+            type: eventType
+          };
+        }
+
+        return parsed;
       } catch (e) {
-        // If not JSON, check if we have an event type from the block (optional enhancement)
-        // For now, treat plain text as reasoning/content if it's not a system/error message
+        // If not JSON, treat as reasoning/content
+        // Use eventType if available, else default to REASONING
         return {
-          type: SSEEventType.REASONING,
+          type: eventType || SSEEventType.REASONING,
           content: cleanData
         } as any;
       }
