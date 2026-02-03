@@ -1,39 +1,59 @@
 
 import os
 import io
-import pyautogui
+import time
 from dotenv import load_dotenv
+from e2b_desktop import Sandbox
 
-# Try importing from gui_agents, handle if not installed
+# Import adapter
+from backend.agent.adapter import E2BAdapter
+
+# Try importing from gui_agents
 try:
     from gui_agents.s3.agents.agent_s import AgentS3
     from gui_agents.s3.agents.grounding import OSWorldACI
-    from gui_agents.s3.utils.local_env import LocalEnv
 except ImportError:
-    print("WARNING: gui_agents not installed. Agent functionality will be mocked.")
+    print("WARNING: gui_agents not installed.")
     AgentS3 = None
     OSWorldACI = None
-    LocalEnv = None
 
 class AgentWrapper:
     def __init__(self):
         load_dotenv()
         
-        self.platform = "linux" # Assuming running on Linux as requested
         self.provider = "openai"
         self.model = "gpt-5-2025-08-07"
         
-        # Grounding Config (UI-TARS)
-        self.ground_provider = "huggingface" 
-        self.ground_url = os.getenv("VISION_SERVICE_URL", "http://localhost:8000")
+        # Grounding Config (UI-TARS local)
+        self.ground_provider = "openai" # Using OpenAI-compatible vLLM API
+        self.ground_url = os.getenv("VISION_SERVICE_URL", "http://localhost:8080/v1")
         self.ground_model = "ui-tars-1.5-7b"
         self.ground_width = 1920
         self.ground_height = 1080
 
-        if AgentS3:
-            self._init_agent()
-        else:
-            self.agent = None
+        self.agent = None
+        self.sandbox = None
+        self.adapter = None
+        self.vnc_url = None
+
+    def initialize_sandbox(self):
+        if not self.sandbox:
+            print("Initializing E2B Sandbox...")
+            self.sandbox = Sandbox()
+            # Start stream to get URL
+            self.sandbox.stream.start()
+            time.sleep(2) # Wait for stream
+            self.vnc_url = self.sandbox.stream.get_url()
+            print(f"Sandbox created! VNC: {self.vnc_url}")
+            
+            # Create Adapter
+            self.adapter = E2BAdapter(self.sandbox)
+            
+            # Init Agent
+            if AgentS3:
+                self._init_agent()
+                
+        return {"sandbox_id": self.sandbox.sandbox_id, "vnc_url": self.vnc_url}
 
     def _init_agent(self):
         engine_params = {
@@ -43,20 +63,24 @@ class AgentWrapper:
             "temperature": 1.0
         }
 
+        # For UI-TARS via vLLM (OpenAI compatible)
         engine_params_for_grounding = {
             "engine_type": self.ground_provider,
             "model": self.ground_model,
             "base_url": self.ground_url,
+            "api_key": "empty",
             "grounding_width": self.ground_width,
             "grounding_height": self.ground_height,
         }
 
-        # Enable local env for coding tasks
-        self.local_env = LocalEnv()
+        # We need to mock LocalEnv or provide a way for OSWorldACI to use our adapter
+        # But Agent-S3 executes code. We need to inject our adapter as 'pyautogui' module.
         
+        # Custom Grounding Agent that uses our Adapter if needed, 
+        # or we just rely on the step() function to execute the code using the adapter.
         self.grounding_agent = OSWorldACI(
-            env=self.local_env,
-            platform=self.platform,
+            env=None, # We handle execution manually
+            platform="linux",
             engine_params_for_generation=engine_params,
             engine_params_for_grounding=engine_params_for_grounding,
             width=self.ground_width,
@@ -66,50 +90,63 @@ class AgentWrapper:
         self.agent = AgentS3(
             engine_params,
             self.grounding_agent,
-            platform=self.platform,
-            max_trajectory_length=8,
+            platform="linux",
+            max_trajectory_length=15,
             enable_reflection=True
         )
         print("Agent S3 Initialized!")
 
     def step(self, instruction: str):
+        if not self.sandbox:
+            self.initialize_sandbox()
+
+        # Capture screenshot from E2B
+        try:
+            # Execute python script inside sandbox to take screenshot and return base64
+            # This avoids dependency on 'scrot' tool availability
+            cmd = "python3 -c \"import pyautogui, base64, io; b = io.BytesIO(); pyautogui.screenshot().save(b, format='PNG'); print(base64.b64encode(b.getvalue()).decode())\""
+            
+            # Run command in sandbox
+            result = self.sandbox.commands.run(cmd)
+            
+            if result.stdout:
+                import base64
+                obs = {
+                    "screenshot": base64.b64decode(result.stdout.strip())
+                }
+            else:
+                print(f"Screenshot capture failed. stderr: {result.stderr}")
+                obs = {"screenshot": b""}
+                
+        except Exception as e:
+            print(f"Screenshot exception: {e}")
+            obs = {"screenshot": b""}
+
         if not self.agent:
-            return {"status": "error", "message": "Agent not initialized"}
-
-        # Capture screenshot
-        screenshot = pyautogui.screenshot()
-        buffered = io.BytesIO()
-        screenshot.save(buffered, format="PNG")
-        screenshot_bytes = buffered.getvalue()
-
-        obs = {
-            "screenshot": screenshot_bytes
-        }
+             return {"status": "error", "message": "Agent not loaded"}
 
         # Predict
         try:
-            info, action = self.agent.predict(instruction=instruction, observation=obs)
+            # We mock the observation for now or implementing screenshot retrieval is next step
+            # Agent-S3 expects 'screenshot' in obs.
             
-            # Action is a list of python code strings to execute
-            # e.g., ["pyautogui.click(100, 200)"]
+            info, action = self.agent.predict(instruction=instruction, observation=obs)
             
             result_logs = []
             for act in action:
-                print(f"Executing: {act}")
-                # Execute the code - DANGEROUS but required for Agent-S3
-                # In a real deployment, this should be sandboxed
+                print(f"Executing Agent Action: {act}")
                 try:
-                    # We might need to inject dependencies into exec scope
-                    exec_globals = {"pyautogui": pyautogui}
+                    # THE MAGIC: Execute code but inject our adapter as 'pyautogui'
+                    exec_globals = {"pyautogui": self.adapter, "time": time}
                     exec(act, exec_globals)
                     result_logs.append(f"Executed: {act}")
                 except Exception as e:
-                    result_logs.append(f"Error executing {act}: {e}")
+                    result_logs.append(f"Error: {e}")
             
             return {
-                "status": "success",
+                "status": "success", 
                 "info": info,
-                "actions": action,
+                "actions": action, 
                 "logs": result_logs
             }
 
