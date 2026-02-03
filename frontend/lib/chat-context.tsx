@@ -239,14 +239,26 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
             case SSEEventType.REASONING:
               if (typeof parsedEvent.content === "string") {
-                assistantMessage = parsedEvent.content;
-                const reasoningMessage: AssistantChatMessage = {
-                  role: "assistant",
-                  id: `assistant-${Date.now()}-${responseCounter++}`, // Unique ID
-                  content: assistantMessage,
-                  model,
-                };
-                setMessages((prev) => [...prev, reasoningMessage]);
+                setMessages((prev) => {
+                  const lastMsg = prev[prev.length - 1];
+                  // Append to previous assistant message if it exists
+                  if (lastMsg && lastMsg.role === "assistant") {
+                    const updatedMsg = {
+                      ...lastMsg,
+                      content: lastMsg.content + "\n" + parsedEvent.content
+                    };
+                    return [...prev.slice(0, -1), updatedMsg];
+                  } else {
+                    // Start new assistant message block
+                    const reasoningMessage: AssistantChatMessage = {
+                      role: "assistant",
+                      id: `assistant-${Date.now()}-${responseCounter++}`,
+                      content: parsedEvent.content,
+                      model,
+                    };
+                    return [...prev, reasoningMessage];
+                  }
+                });
               }
               break;
 

@@ -141,11 +141,12 @@ class AgentWrapper:
             for act in action:
                 print(f"Executing Agent Action: {act}")
                 try:
-                    # Sanitize: Remove 'import pyautogui' lines to prevent overwriting our injected adapter
-                    lines = act.split('\n')
-                    # Keep lines that are NOT imports of pyautogui
-                    sanitized_lines = [l for l in lines if not l.strip().startswith("import pyautogui") and "from pyautogui" not in l]
-                    sanitized_act = '\n'.join(sanitized_lines)
+                    # Sanitize: Handle single-line code blocks like "import pyautogui; pyautogui.click()"
+                    # We must NOT delete the line, but rather neutralize the import so our injected 'pyautogui' global persists.
+                    sanitized_act = act.replace("import pyautogui", "pass")
+                    # Handle "from pyautogui import ..." if it appears (less common in AgentS3 but possible)
+                    if "from pyautogui" in sanitized_act:
+                         sanitized_act = sanitized_act.replace("from pyautogui", "# from pyautogui")
 
                     # THE MAGIC: Execute code but inject our adapter as 'pyautogui'
                     exec_globals = {"pyautogui": self.adapter, "time": time}
