@@ -26,7 +26,12 @@ class AgentService:
         load_dotenv()
         
         self.provider = os.getenv("LLM_PROVIDER", "google")
-        self.model = os.getenv("LLM_MODEL", "gemini-3-flash-preview")
+        
+        default_model = "gemini-3-flash-preview"
+        if self.provider == "fireworks":
+            default_model = "accounts/fireworks/models/kimi-k2p5"
+            
+        self.model = os.getenv("LLM_MODEL", default_model)
         
         # Grounding Config (UI-TARS local)
         self.ground_provider = "openai"
@@ -109,6 +114,15 @@ class AgentService:
                 "api_key": os.getenv("GEMINI_API_KEY"), # New key
                 "thinking_level": "HIGH", # For Gemini 3 Flash
                 "temperature": 1.0
+            }
+        elif self.provider == "fireworks":
+            engine_params = {
+                "engine_type": "openai",
+                "model": self.model, # accounts/fireworks/models/kimi-k2p5
+                "api_key": os.getenv("FIREWORKS_API_KEY"),
+                "base_url": "https://api.fireworks.ai/inference/v1",
+                "temperature": 0.6,
+                "max_tokens": 4096
             }
         else:
             engine_params = {
