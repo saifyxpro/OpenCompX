@@ -1,11 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    experimental: {
-        allowedDevOrigins: [
-            "localhost:3000",
-            ".cloudspaces.litng.ai"
-        ],
-    },
+    output: "standalone",
+    // experimental: {
+    //     allowedDevOrigins: [
+    //         "localhost:3000",
+    //         ".cloudspaces.litng.ai"
+    //     ],
+    // },
     async rewrites() {
         return [
             {
