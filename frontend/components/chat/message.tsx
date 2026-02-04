@@ -29,6 +29,7 @@ import { useChat } from "@/lib/chat-context";
 import { Badge } from "../ui/badge";
 import { Markdown as MemoizedReactMarkdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
+import { Typewriter } from "../ui/typewriter";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const messageVariants = cva("w-full transition-all duration-300 ease-in-out", {
@@ -243,9 +244,13 @@ export function ChatMessage({ message, className }: ChatMessageProps) {
             <div className="whitespace-pre-wrap">{message.content}</div>
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none break-words">
-              <MemoizedReactMarkdown>
-                {message.content}
-              </MemoizedReactMarkdown>
+              {isAssistant ? (
+                <Typewriter content={message.content} speed={5}>
+                  {(text: string) => <MemoizedReactMarkdown>{text}</MemoizedReactMarkdown>}
+                </Typewriter>
+              ) : (
+                <MemoizedReactMarkdown>{message.content}</MemoizedReactMarkdown>
+              )}
             </div>
           )}
         </div>

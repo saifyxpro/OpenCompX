@@ -1,4 +1,4 @@
-export const SANDBOX_TIMEOUT_MS = 300_000; // 5 minutes in milliseconds
+export const SANDBOX_TIMEOUT_MS = 1_800_000; // 30 minutes in milliseconds
 
 // Resolution boundaries for performance optimization
 // The sandbox will run at full resolution, but screenshots sent to the LLM API
