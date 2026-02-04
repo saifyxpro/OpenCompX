@@ -94,7 +94,7 @@ function ActionMessageDisplay({
   // Extract code string safely
   const codeString = typeof action === 'string'
     ? action
-    : action?.code || JSON.stringify(action, null, 2);
+    : (action as any)?.code || JSON.stringify(action, null, 2);
 
   const { title, icon: Icon } = parseAction(codeString);
 
