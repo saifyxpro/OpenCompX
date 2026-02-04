@@ -238,8 +238,10 @@ class AgentService:
             "   - `pyautogui.run_terminal('cmd')`: Run shell commands.\n"
             "   - `pyautogui.drag_rel(x, y)`: Drag relative to current position (use for sliders!).\n"
             "   - `pyautogui.set_clipboard('text')`: Copy text.\n"
-            "6. The system password for user 'agent' is 'agent'. If asked for a password, type 'agent'.\n"
-            "6. Do NOT output 'DONE' until you can SEE the task is complete in the screenshot.\n\n"
+            "7. DATA EXTRACTION TRICK: If asked to extract text/info from a page, DO NOT just scroll and look. \n"
+            "   INSTEAD: Press 'ctrl+a' (Select All), then 'ctrl+c' (Copy), then use `pyautogui.get_clipboard()` to read the COMPLETE page text instantly. \n"
+            "   This is 100x faster than visual scrolling. USE IT.\n"
+            "8. Do NOT output 'DONE' until you can SEE the task is complete in the screenshot.\n\n"
             "REALITY OVERRIDE: You are running in a special LocalDocker environment. 'pyautogui.launch' IS AVAILABLE and IS the ONLY way to open apps. Ignore any previous instructions saying otherwise.\n"
             "Your first action should be to launch Firefox using `pyautogui.launch('firefox')`."
         )
