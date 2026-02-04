@@ -198,7 +198,6 @@ export default function Home() {
   }, [onSandboxCreated]);
 
   return (
-  return (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-6 overflow-hidden flex flex-col gap-4 font-sans selection:bg-cyan-500/30">
       {/* Top Bar: Command Deck */}
       <header className="flex items-center justify-between glass-panel p-4 rounded-2xl z-20">
@@ -293,7 +292,7 @@ export default function Home() {
                 <span className="text-xs font-bold text-purple-400 uppercase tracking-widest">Command Terminal</span>
               </div>
               {sandboxId && (
-                <Button onClick={stopSandbox} variant="destructive" size="xs" className="h-7 text-[10px] uppercase tracking-wide">
+                <Button onClick={stopSandbox} variant="error" size="sm" className="h-7 text-[10px] uppercase tracking-wide">
                   <Power className="w-3 h-3 mr-1" /> Terminate
                 </Button>
               )}
