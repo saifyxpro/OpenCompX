@@ -187,7 +187,7 @@ export function ChatMessage({ message, className }: ChatMessageProps) {
     return (
       <div className="w-full flex justify-center py-4">
         <Badge
-          variant={isError ? "destructive" : "secondary"}
+          variant={isError ? "error" : "muted"}
           className="px-4 py-1.5 text-xs font-medium bg-muted/50 border border-border/50 backdrop-blur-sm"
         >
           {message.content}
