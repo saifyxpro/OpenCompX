@@ -9,9 +9,12 @@ import {
   Menu,
   X,
   ArrowUpRight,
+  Bot,
+  MousePointer2,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { increaseTimeout, stopSandboxAction } from "@/app/actions";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatList } from "@/components/chat/message-list";
@@ -39,6 +42,7 @@ export default function Home() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iFrameWrapperRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isControlOverride, setIsControlOverride] = useState(false);
 
   const {
     messages,
@@ -198,17 +202,17 @@ export default function Home() {
   }, [onSandboxCreated]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 md:p-6 overflow-hidden flex flex-col gap-4 font-sans selection:bg-cyan-500/30">
+    <div className="h-screen bg-background text-foreground p-4 md:p-6 overflow-hidden flex flex-col gap-4 font-sans selection:bg-primary/30">
       {/* Top Bar: Command Deck */}
-      <header className="flex items-center justify-between glass-panel p-4 rounded-2xl z-20">
+      <header className="flex items-center justify-between glass-panel p-4 rounded-2xl z-20 shrink-0">
         <div className="flex items-center gap-4">
           <Link href="/" className="group flex items-center gap-3">
             <Logo width={32} height={32} className="transition-transform group-hover:scale-110 group-hover:rotate-12" />
             <div className="flex flex-col">
-              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
+              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
                 OpenCompX
               </h1>
-              <span className="text-[10px] uppercase tracking-widest text-cyan-500/70 font-mono">
+              <span className="text-[10px] uppercase tracking-widest text-primary/70 font-mono">
                 Autonomous Desktop Agent
               </span>
             </div>
@@ -231,19 +235,19 @@ export default function Home() {
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 min-h-0">
 
         {/* Agent Vision (VNC) - Spans 8 cols */}
-        <section className="col-span-1 lg:col-span-8 flex flex-col gap-4 min-h-[400px]">
-          <div className="glass-panel w-full flex-1 rounded-2xl relative overflow-hidden flex flex-col border-cyan-500/20 shadow-[0_0_30px_rgba(0,212,255,0.05)]">
+        <section className="col-span-1 lg:col-span-8 flex flex-col gap-4 min-h-0 transition-all duration-300">
+          <div className="glass-panel w-full flex-1 rounded-2xl relative overflow-hidden flex flex-col border-primary/20 shadow-[0_0_30px_rgba(0,212,255,0.05)]">
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 h-10 bg-black/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-4 z-10">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-xs font-mono text-cyan-300 tracking-wider">LIVE_FEED // VNC_SECURE</span>
+                <span className="text-xs font-mono text-primary/80 tracking-wider">LIVE_FEED // VNC_SECURE</span>
               </div>
               <div className="flex items-center gap-2">
                 {sandboxId && (
-                  <div className="flex items-center gap-2 px-2 py-1 bg-cyan-900/20 rounded border border-cyan-500/20">
-                    <Timer className="w-3 h-3 text-cyan-400" />
-                    <span className="text-xs font-mono text-cyan-400">
+                  <div className="flex items-center gap-2 px-2 py-1 bg-primary/10 rounded border border-primary/20">
+                    <Timer className="w-3 h-3 text-primary" />
+                    <span className="text-xs font-mono text-primary">
                       {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, "0")}
                     </span>
                   </div>
@@ -252,28 +256,75 @@ export default function Home() {
             </div>
 
             {/* Viewport */}
-            <div ref={iFrameWrapperRef} className="flex-1 w-full h-full relative group">
+            <div ref={iFrameWrapperRef} className="flex-1 w-full h-full relative group bg-black/40">
+
+              {/* VNC Content */}
               {isLoading || (chatLoading && !sandboxId) ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80">
-                  <Loader variant="square" className="text-cyan-400 w-12 h-12" />
-                  <div className="mt-4 font-mono text-cyan-500 animate-pulse">
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <Loader variant="square" className="text-primary w-12 h-12" />
+                  <div className="mt-4 font-mono text-primary animate-pulse">
                     INITIALIZING_NEURAL_LINK...
                   </div>
                 </div>
               ) : sandboxId && vncUrl ? (
-                <iframe
-                  ref={iframeRef}
-                  src={vncUrl}
-                  className="w-full h-full object-cover"
-                  allow="clipboard-read; clipboard-write"
-                />
+                <>
+                  <iframe
+                    ref={iframeRef}
+                    src={vncUrl}
+                    className={cn(
+                      "w-full h-full object-cover transition-all duration-500",
+                      !isControlOverride && "pointer-events-none group-hover:blur-sm group-hover:opacity-50"
+                    )}
+                    allow="clipboard-read; clipboard-write"
+                  />
+
+                  {/* Agent Lock Overlay - Shows on Hover if not overridden */}
+                  {!isControlOverride && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto z-10">
+                      <div className="bg-background/80 backdrop-blur-xl border border-primary/20 p-6 rounded-2xl flex flex-col items-center gap-4 shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
+                          <Bot className="w-6 h-6 text-primary" />
+                        </div>
+                        <div className="text-center">
+                          <h3 className="text-lg font-bold text-foreground">Agent Active</h3>
+                          <p className="text-xs text-muted-foreground font-mono mt-1">
+                            SYSTEM_LOCKED // AUTONOMOUS_MODE
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => setIsControlOverride(true)}
+                          variant="outline"
+                          className="border-primary/30 hover:bg-primary/10 text-primary"
+                        >
+                          <MousePointer2 className="w-4 h-4 mr-2" />
+                          Take Control
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Resume Agent Button - Shows if overridden */}
+                  {isControlOverride && (
+                    <div className="absolute top-4 right-4 z-20">
+                      <Button
+                        onClick={() => setIsControlOverride(false)}
+                        variant="default"
+                        size="sm"
+                        className="shadow-xl animate-in fade-in zoom-in duration-300"
+                      >
+                        <Bot className="w-4 h-4 mr-2" />
+                        Resume Agent
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[url('/grid-pattern.svg')] bg-center opacity-80">
-                  <div className="w-24 h-24 rounded-full bg-cyan-500/10 flex items-center justify-center mb-4 animate-pulse-slow ring-1 ring-cyan-500/30">
-                    <Power className="w-10 h-10 text-cyan-400" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[url('/grid-pattern.svg')] bg-center opacity-80 decoration-slice">
+                  <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4 animate-pulse-slow ring-1 ring-primary/30">
+                    <Power className="w-10 h-10 text-primary" />
                   </div>
-                  <h2 className="text-2xl font-light text-white mb-2">System Standby</h2>
-                  <p className="text-zinc-500 max-w-sm text-center">
+                  <h2 className="text-2xl font-light text-foreground mb-2">System Standby</h2>
+                  <p className="text-muted-foreground max-w-sm text-center">
                     Initiate a task via the command terminal to wake the agent.
                   </p>
                 </div>
@@ -283,13 +334,13 @@ export default function Home() {
         </section>
 
         {/* Command Terminal (Chat) - Spans 4 cols */}
-        <section className="col-span-1 lg:col-span-4 h-full flex flex-col min-h-[500px]">
-          <div className="glass-panel w-full flex-1 rounded-2xl flex flex-col overflow-hidden border-purple-500/20 relative">
+        <section className="col-span-1 lg:col-span-4 h-full flex flex-col min-h-0 transition-all duration-300">
+          <div className="glass-panel w-full flex-1 rounded-2xl flex flex-col overflow-hidden border-accent/20 relative">
 
             {/* Terminal Header */}
-            <div className="h-12 border-b border-white/5 bg-white/5 flex items-center px-4 justify-between shrink-0">
+            <div className="h-12 border-b border-border/10 bg-white/5 flex items-center px-4 justify-between shrink-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-purple-400 uppercase tracking-widest">Command Terminal</span>
+                <span className="text-xs font-bold text-accent uppercase tracking-widest">Command Terminal</span>
               </div>
               {sandboxId && (
                 <Button onClick={stopSandbox} variant="error" size="sm" className="h-7 text-[10px] uppercase tracking-wide">
@@ -299,7 +350,7 @@ export default function Home() {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto relative scrollbar-thin scrollbar-thumb-purple-900/50 scrollbar-track-transparent">
+            <div className="flex-1 overflow-y-auto relative scrollbar-thin scrollbar-track-transparent">
               <ChatList messages={messages} className="p-4" />
               {messages.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6">
@@ -309,7 +360,7 @@ export default function Home() {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-black/20 border-t border-white/5 shrink-0">
+            <div className="p-4 bg-black/10 border-t border-border/10 shrink-0">
               <ChatInput
                 input={input}
                 setInput={setInput}
