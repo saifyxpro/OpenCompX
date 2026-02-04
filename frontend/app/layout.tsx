@@ -20,9 +20,8 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OpenCompX - AI Computer Agent",
-  description:
-    "Next-generation AI agent that intelligently controls your computer environment.",
+  title: "OpenCompX",
+  description: "Autonomous AI Desktop Agent | Deep Space Edition",
   keywords: [
     "OpenCompX",
     "AI",

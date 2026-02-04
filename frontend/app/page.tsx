@@ -198,242 +198,133 @@ export default function Home() {
   }, [onSandboxCreated]);
 
   return (
-    <div className="w-full h-dvh overflow-hidden p-2 sm:p-4 md:p-8 md:pb-10">
-      <Frame
-        classNames={{
-          wrapper: "w-full h-full",
-          frame: "flex flex-col h-full overflow-hidden",
-        }}
-      >
-        <div className="border-b w-full px-2 sm:px-3 py-2 flex items-center justify-between h-auto">
-          <div className="flex flex-1 items-center text-base sm:text-lg truncate">
-            <Link
-              href="/"
-              className="flex items-center gap-1 sm:gap-2"
-              target="_blank"
-            >
-              <Logo width={20} height={20} className="sm:w-6 sm:h-6" />
-              <h1 className="whitespace-pre">Surf - Computer Agent by </h1>
-            </Link>
-            <Link
-              href="https://e2b.dev"
-              className="underline decoration-accent decoration-1 underline-offset-2 text-accent"
-              target="_blank"
-            >
-              E2B
-            </Link>
-          </div>
+  return (
+    <div className="min-h-screen bg-background text-foreground p-4 md:p-6 overflow-hidden flex flex-col gap-4 font-sans selection:bg-cyan-500/30">
+      {/* Top Bar: Command Deck */}
+      <header className="flex items-center justify-between glass-panel p-4 rounded-2xl z-20">
+        <div className="flex items-center gap-4">
+          <Link href="/" className="group flex items-center gap-3">
+            <Logo width={32} height={32} className="transition-transform group-hover:scale-110 group-hover:rotate-12" />
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
+                OpenCompX
+              </h1>
+              <span className="text-[10px] uppercase tracking-widest text-cyan-500/70 font-mono">
+                Autonomous Desktop Agent
+              </span>
+            </div>
+          </Link>
+        </div>
 
+        <div className="flex items-center gap-3">
+          <RepoBanner />
+          <ThemeToggle />
+          {/* Mobile Menu Toggle */}
           <div className="md:hidden">
-            <Button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              variant="ghost"
-              size="icon"
-              className="mr-1"
-            >
-              {mobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
+            <Button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} variant="ghost" size="icon">
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
-
-          <div className="hidden md:flex items-center gap-2">
-            <ThemeToggle />
-            <RepoBanner />
-
-            <AnimatePresence>
-              {sandboxId && (
-                <motion.div
-                  className="flex items-center gap-2"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Button
-                    onClick={handleIncreaseTimeout}
-                    variant="muted"
-                    title={
-                      isTabVisible
-                        ? "Increase Time"
-                        : "Timer paused (tab not active)"
-                    }
-                  >
-                    <Timer
-                      className={`h-3 w-3 ${
-                        !isTabVisible ? "text-fg-400" : ""
-                      }`}
-                    />
-                    <span
-                      className={`text-xs font-medium ${
-                        !isTabVisible ? "text-fg-400" : ""
-                      }`}
-                    >
-                      {Math.floor(timeRemaining / 60)}:
-                      {(timeRemaining % 60).toString().padStart(2, "0")}
-                      {!isTabVisible && " (paused)"}
-                    </span>
-                  </Button>
-
-                  <Button
-                    onClick={stopSandbox}
-                    variant="error"
-                    className="text-xs"
-                  >
-                    <Power className="w-3 h-3" />
-                    Stop
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="md:hidden flex items-center">
-            <AnimatePresence>
-              {sandboxId && (
-                <motion.div
-                  className="flex items-center gap-1"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Button
-                    onClick={handleIncreaseTimeout}
-                    variant="muted"
-                    size="sm"
-                    title={
-                      isTabVisible
-                        ? "Increase Time"
-                        : "Timer paused (tab not active)"
-                    }
-                    className="px-1.5"
-                  >
-                    <Timer
-                      className={`h-3 w-3 ${
-                        !isTabVisible ? "text-fg-400" : ""
-                      }`}
-                    />
-                    <span
-                      className={`text-xs font-medium ml-1 ${
-                        !isTabVisible ? "text-fg-400" : ""
-                      }`}
-                    >
-                      {Math.floor(timeRemaining / 60)}:
-                      {(timeRemaining % 60).toString().padStart(2, "0")}
-                    </span>
-                  </Button>
-
-                  <Button
-                    onClick={stopSandbox}
-                    variant="error"
-                    size="sm"
-                    className="text-xs px-1.5"
-                  >
-                    <Power className="w-3 h-3" />
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
         </div>
+      </header>
 
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              className="md:hidden border-b p-2 flex items-center justify-between"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-            >
+      {/* Main Holo-Deck (Bento Grid) */}
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 min-h-0">
+
+        {/* Agent Vision (VNC) - Spans 8 cols */}
+        <section className="col-span-1 lg:col-span-8 flex flex-col gap-4 min-h-[400px]">
+          <div className="glass-panel w-full flex-1 rounded-2xl relative overflow-hidden flex flex-col border-cyan-500/20 shadow-[0_0_30px_rgba(0,212,255,0.05)]">
+            {/* Header */}
+            <div className="absolute top-0 left-0 right-0 h-10 bg-black/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-4 z-10">
               <div className="flex items-center gap-2">
-                <ThemeToggle />
-                <RepoBanner />
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-xs font-mono text-cyan-300 tracking-wider">LIVE_FEED // VNC_SECURE</span>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <div className="flex items-center gap-2">
+                {sandboxId && (
+                  <div className="flex items-center gap-2 px-2 py-1 bg-cyan-900/20 rounded border border-cyan-500/20">
+                    <Timer className="w-3 h-3 text-cyan-400" />
+                    <span className="text-xs font-mono text-cyan-400">
+                      {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, "0")}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
 
-        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-          <div
-            ref={iFrameWrapperRef}
-            className="relative w-full md:flex-1 h-[40vh] md:h-auto overflow-hidden"
-          >
-            {isLoading || (chatLoading && !sandboxId) ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-light text-accent">
-                    {isLoading ? "Starting instance" : "Creating sandbox..."}
-                  </h2>
-                  <Loader variant="square" className="text-accent" />
+            {/* Viewport */}
+            <div ref={iFrameWrapperRef} className="flex-1 w-full h-full relative group">
+              {isLoading || (chatLoading && !sandboxId) ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80">
+                  <Loader variant="square" className="text-cyan-400 w-12 h-12" />
+                  <div className="mt-4 font-mono text-cyan-500 animate-pulse">
+                    INITIALIZING_NEURAL_LINK...
+                  </div>
                 </div>
-
-                <AssemblyLoader
-                  className="mt-4 text-fg-300"
-                  gridWidth={8}
-                  gridHeight={4}
-                  filledChar="■"
-                  emptyChar="□"
+              ) : sandboxId && vncUrl ? (
+                <iframe
+                  ref={iframeRef}
+                  src={vncUrl}
+                  className="w-full h-full object-cover"
+                  allow="clipboard-read; clipboard-write"
                 />
-
-                <p className="text-sm text-fg-500 mt-4">
-                  {isLoading
-                    ? "Preparing your sandbox environment..."
-                    : "Creating a new sandbox for your request..."}
-                </p>
-              </div>
-            ) : sandboxId && vncUrl ? (
-              <iframe
-                ref={iframeRef}
-                src={vncUrl}
-                className="w-full h-full"
-                allow="clipboard-read; clipboard-write"
-              />
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                <Surfing className="text-[7px] leading-[7px] text-accent font-bold" />
-                <h1 className="text-center text-fg-300 max-w-xs">
-                  <span className="text-fg">Type</span> a message or{" "}
-                  <span className="text-fg">select</span> an example prompt to
-                  start a new{" "}
-                  <a
-                    href="https://github.com/e2b-dev/desktop"
-                    className="underline inline-flex items-center gap-1 decoration-accent decoration-1 underline-offset-2 text-accent"
-                    target="_blank"
-                  >
-                    sandbox <ArrowUpRight className="size-4" />
-                  </a>
-                </h1>
-              </div>
-            )}
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[url('/grid-pattern.svg')] bg-center opacity-80">
+                  <div className="w-24 h-24 rounded-full bg-cyan-500/10 flex items-center justify-center mb-4 animate-pulse-slow ring-1 ring-cyan-500/30">
+                    <Power className="w-10 h-10 text-cyan-400" />
+                  </div>
+                  <h2 className="text-2xl font-light text-white mb-2">System Standby</h2>
+                  <p className="text-zinc-500 max-w-sm text-center">
+                    Initiate a task via the command terminal to wake the agent.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
+        </section>
 
-          <div className="flex-1 flex flex-col relative border-t md:border-t-0 md:border-l overflow-hidden h-[60vh] md:h-auto md:max-w-xl">
-            <ChatList className="flex-1" messages={messages} />
+        {/* Command Terminal (Chat) - Spans 4 cols */}
+        <section className="col-span-1 lg:col-span-4 h-full flex flex-col min-h-[500px]">
+          <div className="glass-panel w-full flex-1 rounded-2xl flex flex-col overflow-hidden border-purple-500/20 relative">
 
-            {messages.length === 0 && (
-              <ExamplePrompts
-                onPromptClick={handleExampleClick}
-                disabled={false}
-                className="-translate-y-16"
+            {/* Terminal Header */}
+            <div className="h-12 border-b border-white/5 bg-white/5 flex items-center px-4 justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-purple-400 uppercase tracking-widest">Command Terminal</span>
+              </div>
+              {sandboxId && (
+                <Button onClick={stopSandbox} variant="destructive" size="xs" className="h-7 text-[10px] uppercase tracking-wide">
+                  <Power className="w-3 h-3 mr-1" /> Terminate
+                </Button>
+              )}
+            </div>
+
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto relative scrollbar-thin scrollbar-thumb-purple-900/50 scrollbar-track-transparent">
+              <ChatList messages={messages} className="p-4" />
+              {messages.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6">
+                  <ExamplePrompts onPromptClick={handleExampleClick} className="w-full pointer-events-auto" />
+                </div>
+              )}
+            </div>
+
+            {/* Input Area */}
+            <div className="p-4 bg-black/20 border-t border-white/5 shrink-0">
+              <ChatInput
+                input={input}
+                setInput={setInput}
+                onSubmit={onSubmit}
+                isLoading={chatLoading}
+                onStop={stopGeneration}
+                className="w-full"
               />
-            )}
+            </div>
 
-            <ChatInput
-              input={input}
-              setInput={setInput}
-              onSubmit={onSubmit}
-              isLoading={chatLoading}
-              onStop={stopGeneration}
-              disabled={false}
-              className="absolute bottom-3 left-3 right-3"
-            />
           </div>
-        </div>
-      </Frame>
+        </section>
+
+      </main>
     </div>
   );
 }

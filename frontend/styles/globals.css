@@ -1,52 +1,92 @@
-@import 'tailwindcss';
-
-@import './variables.css';
-@import './theme.css';
-
-@layer theme, base, components, utilities;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
-  * {
-    @apply border-border ring-ring;
-  }
+  :root {
+    /* Cosmic Palette */
+    --background: 240 10% 4%;
+    /* #0A0A0F Void Black */
+    --foreground: 0 0% 95%;
+    /* #F2F2F2 Starlight */
 
-  body {
-    @apply bg-gradient-to-tr from-bg to-bg-100 text-fg tracking-wide antialiased;
-  }
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 95%;
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-mono font-light uppercase;
-  }
+    --popover: 240 10% 5%;
+    --popover-foreground: 0 0% 95%;
 
-  /* Selection styling */
-  ::selection {
-    @apply bg-accent/20;
-  }
+    --primary: 190 100% 50%;
+    /* #00D4FF Cyan Plasma */
+    --primary-foreground: 240 10% 4%;
 
-  /* Scrollbar styling */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
+    --secondary: 270 50% 20%;
+    /* #1A0033 Nebula */
+    --secondary-foreground: 0 0% 95%;
 
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
+    --muted: 240 10% 12%;
+    --muted-foreground: 240 5% 65%;
 
-  ::-webkit-scrollbar-thumb {
-    @apply bg-bg-300 rounded-full;
-  }
+    --accent: 300 100% 50%;
+    /* #FF00FF Neon Magenta */
+    --accent-foreground: 0 0% 100%;
 
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-bg-400;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 10% 15%;
+    --input: 240 10% 15%;
+    --ring: 190 100% 50%;
+
+    --radius: 0.75rem;
   }
 }
 
-.lucide {
-  stroke-width: 1.5px;
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    background-image:
+      radial-gradient(circle at 15% 50%, rgba(26, 0, 51, 0.4), transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(0, 212, 255, 0.15), transparent 25%);
+    background-attachment: fixed;
+  }
+}
+
+/* Glassmorphism Utilities */
+@layer components {
+  .glass-panel {
+    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-xl;
+  }
+
+  .glass-card {
+    @apply bg-zinc-900/30 backdrop-blur-md border border-white/5 hover:border-cyan-500/30 transition-colors duration-300;
+  }
+
+  .neon-text {
+    @apply drop-shadow-[0_0_5px_rgba(0, 212, 255, 0.5)];
+  }
+
+  .bento-grid {
+    @apply grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A0A0F;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #33334D;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00D4FF;
 }
