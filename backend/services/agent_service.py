@@ -233,6 +233,17 @@ class AgentService:
             "Your first action should be to launch Firefox using `pyautogui.launch('firefox')`."
         )
 
+        if self.provider == "fireworks":
+            augmented_instruction = (
+                "IMPORTANT: You are running in a STRICT EXECUTION MODE. \n"
+                "You MUST NOT output any thoughts, reasoning, or markdown text. \n"
+                "You must output ONLY a valid Python code block containing a SINGLE action. \n"
+                "Example response:\n"
+                "```python\n"
+                "pyautogui.click(500, 500)\n"
+                "```\n\n"
+            ) + augmented_instruction
+
         print(f"\n{'='*60}")
         print(f"AGENT STEP {step_num + 1}")
         print(f"{'='*60}")
