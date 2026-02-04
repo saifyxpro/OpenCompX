@@ -11,6 +11,7 @@ import {
   ArrowUpRight,
   Bot,
   MousePointer2,
+  Sun,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
@@ -43,6 +44,11 @@ export default function Home() {
   const iFrameWrapperRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isControlOverride, setIsControlOverride] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const {
     messages,
@@ -153,20 +159,28 @@ export default function Home() {
     toast.success("Chat cleared");
   };
 
-  const ThemeToggle = () => (
-    <Button
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      variant="outline"
-      size="icon"
-      suppressHydrationWarning
-    >
-      {theme === "dark" ? (
-        <SunIcon className="h-5 w-5" suppressHydrationWarning />
-      ) : (
-        <MoonIcon className="h-5 w-5" suppressHydrationWarning />
-      )}
-    </Button>
-  );
+  const ThemeToggle = () => {
+    if (!mounted) {
+      return (
+        <Button variant="outline" size="icon" className="opacity-50">
+          <Sun className="h-5 w-5" />
+        </Button>
+      );
+    }
+    return (
+      <Button
+        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        variant="outline"
+        size="icon"
+      >
+        {theme === "dark" ? (
+          <Sun className="h-5 w-5" />
+        ) : (
+          <MoonIcon className="h-5 w-5" />
+        )}
+      </Button>
+    );
+  };
 
   useEffect(() => {
     if (!sandboxId) return;

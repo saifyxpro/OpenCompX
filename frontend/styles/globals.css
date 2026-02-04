@@ -4,154 +4,128 @@
 
 @layer base {
   :root {
-    /* LIGHT MODE: Ice Polaris (Clean, Professional, Cyan Accents) */
-    --background: 210 20% 98%;
-    /* #F8FAFC Ice White */
+    /* "Polaris Clean" - Senior Architect Aesthetic */
+    /* Base: Pure White & Slate */
+    --background: 0 0% 100%;
+    /* #ffffff */
     --foreground: 222 47% 11%;
-    /* #0F172A Deep Navy */
+    /* #0f172a (Slate 900) */
 
+    /* Cards: White with subtle separation */
     --card: 0 0% 100%;
-    /* Pure White */
     --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 190 100% 50%;
-    /* #00D4FF Cyan Plasma - The ONLY accent */
-    --primary-foreground: 222 47% 11%;
+    /* Primary: Royal Blue (Trust, Intelligence) - No Neon */
+    --primary: 221 83% 53%;
+    /* #2563eb (Blue 600) */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96%;
-    /* Light Gray Blue */
+    /* Secondary: Subtle Slate */
+    --secondary: 210 40% 96.1%;
+    /* #f1f5f9 (Slate 100) */
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 40% 96%;
+    --muted: 210 40% 96.1%;
     --muted-foreground: 215 16% 47%;
+    /* #64748b (Slate 500) */
 
-    --accent: 190 100% 50%;
-    /* Match Primary for Monochrome feel */
+    /* Accent: Match Primary for consistency */
+    --accent: 210 40% 96.1%;
     --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 190 100% 50%;
-    /* Cyan Ring */
+    --border: 214.3 31.8% 91.4%;
+    /* #e2e8f0 (Slate 200) */
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221 83% 53%;
+    /* Blue Ring */
 
     --radius: 0.5rem;
-    /* Tighter, more technical radius */
 
-    /* Theme-specific tokens */
-    --glass-bg: rgba(255, 255, 255, 0.8);
-    --glass-border: rgba(15, 23, 42, 0.05);
+    /* Semantic Tokens */
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --glass-border: rgba(148, 163, 184, 0.2);
   }
 
   .dark {
-    /* DARK MODE: Abyss Pulse (Void Black + Cyan Only) */
-    --background: 240 10% 2%;
-    /* #050508 Ultra Deep Void */
-    --foreground: 190 10% 95%;
-    /* Cyan-tinted White */
-
-    --card: 240 10% 4%;
-    /* #0A0A0F Subtle Elevation */
-    --card-foreground: 190 10% 95%;
-
-    --popover: 240 10% 4%;
-    --popover-foreground: 190 10% 95%;
-
-    --primary: 190 100% 50%;
-    /* #00D4FF Cyan Plasma */
-    --primary-foreground: 240 10% 2%;
-
-    --secondary: 240 10% 8%;
-    /* #14141C Muted Steel */
-    --secondary-foreground: 190 10% 95%;
-
-    --muted: 240 10% 8%;
-    --muted-foreground: 240 5% 60%;
-
-    --accent: 190 100% 50%;
-    /* Monochromatic Accent */
-    --accent-foreground: 240 10% 2%;
-
-    --destructive: 0 60% 50%;
-    /* Muted Red for errors */
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 240 10% 12%;
-    /* Subtle border */
-    --input: 240 10% 12%;
-    --ring: 190 100% 50%;
-    /* Cyan Ring */
-
-    /* Theme-specific tokens */
-    --glass-bg: rgba(5, 5, 8, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.08);
+    /* Minimal Dark Mode Fallback (Just in case) */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 19% 27%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 19% 27%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217 19% 27%;
+    --accent-foreground: 210 40% 98%;
+    --border: 217 19% 27%;
+    --input: 217 19% 27%;
+    --ring: 224.3 76.3% 48%;
+    --glass-bg: rgba(15, 23, 42, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.1);
   }
 }
 
 @layer base {
-  body {
-    @apply bg-background text-foreground transition-colors duration-300;
-    font-feature-settings: "ss01" 1, "ss03" 1, "cv11" 1, "cv02" 1;
-    /* Technical font features */
+  * {
+    @apply border-border;
   }
 
-  /* Only apply subtle grid in dark mode - NO gradients, pure void */
-  .dark body {
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 50px 50px;
-    background-position: center top;
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/20;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  /* Subtle grain for texture - very minimal */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.4;
   }
 }
 
-/* Glassmorphism Utilities */
 @layer components {
+
+  /* Clean Glass - No Blur Overkill */
   .glass-panel {
-    @apply backdrop-blur-xl shadow-2xl transition-all duration-300;
-    background-color: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    @apply bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-sm transition-all;
   }
 
   .glass-card {
-    @apply backdrop-blur-md transition-colors duration-300;
-    background-color: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    @apply bg-white border border-slate-100 shadow-sm rounded-lg transition-all hover:shadow-md;
   }
 
-  .dark .glass-card:hover {
-    @apply border-cyan-500/30 bg-cyan-950/10;
-  }
-
-  /* Neon Text - refined, less glowy */
-  .dark .neon-text {
-    @apply drop-shadow-[0_0_8px_rgba(0, 212, 255, 0.3)];
-  }
-
-  .bento-grid {
-    @apply grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4;
+  /* Remove Neon effects */
+  .neon-text {
+    @apply font-medium text-primary tracking-tight;
   }
 }
 
-/* Scrollbar - Minimalist */
+/* Scrollbar - Clean & Minimal */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-white/10 rounded-full transition-colors;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary/40;
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
 }
