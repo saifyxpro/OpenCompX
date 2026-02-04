@@ -113,8 +113,9 @@ class LocalDockerAdapter:
         self._exec("xdotool mouseup 1")
     
     def scroll(self, clicks, x=None, y=None, **kwargs):
+        """Vertical scroll (positive=up, negative=down)."""
         direction = 4 if clicks > 0 else 5  # 4=up, 5=down in X11
-        amount = abs(clicks)
+        amount = abs(int(clicks))
         logger.info(f"Local Scroll: {'up' if clicks > 0 else 'down'} {amount}")
         
         if x is not None and y is not None:
@@ -122,6 +123,24 @@ class LocalDockerAdapter:
         
         for _ in range(amount):
             self._exec(f"xdotool click {direction}")
+            time.sleep(0.05) # Small delay for reliability
+
+    def vscroll(self, clicks, x=None, y=None, **kwargs):
+        """Vertical scroll alias."""
+        self.scroll(clicks, x, y, **kwargs)
+
+    def hscroll(self, clicks, x=None, y=None, **kwargs):
+        """Horizontal scroll (positive=right, negative=left)."""
+        direction = 7 if clicks > 0 else 6  # 6=left, 7=right
+        amount = abs(int(clicks))
+        logger.info(f"Local HScroll: {'right' if clicks > 0 else 'left'} {amount}")
+        
+        if x is not None and y is not None:
+            self._exec(f"xdotool mousemove {int(x)} {int(y)}")
+        
+        for _ in range(amount):
+            self._exec(f"xdotool click {direction}")
+            time.sleep(0.05)
     
     # --- Keyboard Functions ---
     def write(self, message, interval=0.0, **kwargs):
@@ -263,6 +282,28 @@ def start_container():
         logger.error(f"Failed to start container: {e}")
         return False
 
+
+    def drag_rel(self, x_offset, y_offset, duration=0.0, **kwargs):
+        """Drag relative to current position (Good for sliders)."""
+        logger.info(f"Local Drag Rel: x={x_offset}, y={y_offset}")
+        self._exec("xdotool mousedown 1")
+        self._exec(f"xdotool mousemove_relative -- {int(x_offset)} {int(y_offset)}")
+        self._exec("xdotool mouseup 1")
+
+    def run_terminal(self, cmd: str):
+        """Run a shell command in the container background."""
+        logger.info(f"Local Terminal Run: {cmd}")
+        return self._exec(cmd, timeout=10).stdout
+
+    def set_clipboard(self, text: str):
+        """Set clipboard content using xclip."""
+        # Escaping for echo
+        safe_text = text.replace("'", "'\\''")
+        self._exec(f"echo -n '{safe_text}' | xclip -selection clipboard")
+
+    def get_clipboard(self) -> str:
+        """Get clipboard content."""
+        return self._exec("xclip -selection clipboard -o", timeout=5).stdout
 
 def get_novnc_url(port: int = 6080) -> str:
     """Get the noVNC URL for the local container."""
