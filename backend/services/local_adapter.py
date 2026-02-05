@@ -136,6 +136,28 @@ class LocalDockerAdapter:
         keys = "+".join(args)
         logger.info(f"Local Hotkey: {keys}")
         self._exec(f"xdotool key {keys}")
+
+    def press(self, keys, presses=1, interval=0.0, **kwargs):
+        """Press a key or list of keys."""
+        if isinstance(keys, str):
+            keys = [keys]
+        
+        logger.info(f"Local Press: {keys} x{presses}")
+        for _ in range(presses):
+            for k in keys:
+                self._exec(f"xdotool key {k}")
+                if interval > 0:
+                    time.sleep(interval)
+
+    def keyDown(self, key, **kwargs):
+        """Hold a key down."""
+        logger.info(f"Local KeyDown: {key}")
+        self._exec(f"xdotool keydown {key}")
+
+    def keyUp(self, key, **kwargs):
+        """Release a key."""
+        logger.info(f"Local KeyUp: {key}")
+        self._exec(f"xdotool keyup {key}")
         
     def typewrite(self, text, interval=0.0, **kwargs):
         """Type text using xdotool."""

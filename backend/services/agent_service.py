@@ -50,24 +50,41 @@ class GroundingProxy:
         
     def launch(self, app_name):
         """Mock launch - The Interceptor in LangGraph handles this or LocalDockerAdapter."""
-        return f"Launched {app_name}"
+        return f"agent.launch('{app_name}')"
         
-    def typewrite(self, *args, **kwargs):
+    def typewrite(self, text, *args, **kwargs):
         """Alias for write - fixes planner hallucinations."""
-        return "Typed text"
+        return f"agent.typewrite('{text}')"
         
     def hotkey(self, *args, **kwargs):
         """Compat alias for hotkey."""
-        return "Hotkey pressed"
+        keys = "', '".join(args)
+        return f"agent.hotkey('{keys}')"
+        
+    def press(self, keys, *args, **kwargs):
+        """Compat alias for press."""
+        return f"agent.press('{keys}')"
+        
+    def keyDown(self, key, *args, **kwargs):
+        """Compat alias for keyDown."""
+        return f"agent.keyDown('{key}')"
+        
+    def keyUp(self, key, *args, **kwargs):
+        """Compat alias for keyUp."""
+        return f"agent.keyUp('{key}')"
+        
+    def dragTo(self, x, y, *args, **kwargs):
+        """Compat alias for dragTo."""
+        return f"agent.dragTo({x}, {y})"
         
     def rightClick(self, *args, **kwargs):
         """Compat alias for rightClick."""
-        return "Right clicked"
+        return "agent.rightClick()"
         
-    def scroll(self, *args, **kwargs):
+    def scroll(self, clicks, *args, **kwargs):
         """Compat alias for scroll."""
-        return "Scrolled"
-        
+        return f"agent.scroll({clicks})"
+
     def predict(self, *args, **kwargs):
         """Intercept the grounding call and inject the real screenshot."""
         # If we have a cached screenshot, inject it into the observation

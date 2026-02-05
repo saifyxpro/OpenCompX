@@ -197,7 +197,7 @@ class LangGraphAgentService:
                 
                 # Execute
                 import subprocess as _subprocess
-                exec_globals = {"pyautogui": self.adapter, "time": time, "subprocess": _subprocess}
+                exec_globals = {"agent": self.adapter, "pyautogui": self.adapter, "time": time, "subprocess": _subprocess}
                 
                 logger.info(f"Executing: {sanitized_act}")
                 exec(sanitized_act, exec_globals)
