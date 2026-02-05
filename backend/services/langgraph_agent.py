@@ -98,6 +98,14 @@ class LangGraphAgentService:
                 self.agent.grounding_agent.update_screenshot(screenshot_bytes)
                 obs["screenshot"] = b"" # Strip or reduce size
             
+            # CRITICAL LOOP FIX: Provide explicit text feedback since we removed the screenshot
+            last_result = state.get("scratchpad", "")
+            if last_result:
+                 # Inject previous action result into the observation so the planner knows it happened
+                 obs["last_action_result"] = last_result[-1] if isinstance(last_result, list) else last_result
+                 # Also append to instruction for good measure (some agents ignore obs keys)
+                 current_instruction += f"\n\n[SYSTEM FEEDBACK FROM PREVIOUS ACTION]:\n{obs['last_action_result']}"
+
             info, action = self.agent.predict(instruction=current_instruction, observation=obs)
             
             # 3. Process Result
@@ -174,9 +182,15 @@ class LangGraphAgentService:
             # Turbo Mode V2: Fast sleep
             time.sleep(0.1) 
             
+        # Feedback for Agent Node
+        feedback = f"Actions executed ({executed_count})."
+        if logs:
+             feedback += " Logs: " + "; ".join(logs)
+             
         return {
             "executed_actions_count": state["executed_actions_count"] + executed_count,
-            "logs": logs
+            "logs": logs,
+            "scratchpad": feedback # Provide feedback to agent
         }
 
     def _should_continue(self, state: AgentState) -> str:
