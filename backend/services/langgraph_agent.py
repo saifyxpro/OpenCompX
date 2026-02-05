@@ -182,9 +182,10 @@ class LangGraphAgentService:
                 sanitized_act = sanitized_act.replace("import pyautogui", "pass")
                 
                 # BUGFIX: UI-TARS generates `clicks=0.95` (confidence) instead of integer.
-                # Replace clicks=FLOAT with clicks=1
+                # Replace clicks=FLOAT with clicks=1, and button=FLOAT with button='left'
                 import re
                 sanitized_act = re.sub(r'clicks=\d+\.\d+', 'clicks=1', sanitized_act)
+                sanitized_act = re.sub(r'button=\d+\.\d+', "button='left'", sanitized_act)
 
                 logger.info(f"Executing Agent Code: {sanitized_act}")
 

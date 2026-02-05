@@ -74,22 +74,23 @@ class LocalDockerAdapter:
     
     # --- Screenshot ---
     def screenshot(self, format: str = "bytes") -> bytes:
-        """Capture screenshot from container."""
+        """Capture screenshot from container. Prefer 'import' (stream) over 'scrot' (disk)."""
+        # 1. Try ImageMagick 'import' (fastest, memory stream)
         try:
-            # Use scrot to capture, output to stdout as PNG
+            result = self._exec_bytes("import -window root png:-", timeout=5)
+            if result and len(result) > 1000:
+                return result
+        except Exception as e:
+            logger.debug(f"ImageMagick screenshot failed: {e}")
+
+        # 2. Fallback to 'scrot' (slower, disk I/O)
+        try:
+             # Use scrot to capture, output to stdout as PNG
             result = self._exec_bytes("scrot -o /tmp/screen.png && cat /tmp/screen.png", timeout=10)
             if result and len(result) > 1000:
                 return result
         except Exception as e:
-            logger.error(f"Screenshot failed: {e}")
-        
-        # Fallback to import (ImageMagick)
-        try:
-            result = self._exec_bytes("import -window root png:-", timeout=15)
-            if result and len(result) > 1000:
-                return result
-        except Exception as e:
-            logger.error(f"ImageMagick screenshot failed: {e}")
+            logger.error(f"Scrot screenshot failed: {e}")
         
         return b""
     
@@ -100,17 +101,16 @@ class LocalDockerAdapter:
         if x is not None and y is not None:
             self._exec(f"xdotool mousemove {int(x)} {int(y)}")
         
-        button_map = {'left': '1', 'middle': '2', 'right': '3'}
-        btn = button_map.get(button, '1')
+        # Map button names to numbers
+        btn_map = {'left': 1, 'middle': 2, 'right': 3}
+        btn_num = btn_map.get(str(button).lower(), 1)
         
-        for _ in range(clicks):
-            self._exec(f"xdotool click {btn}")
-            if interval > 0:
-                time.sleep(interval)
-    
-        if x is not None and y is not None:
-            self._exec(f"xdotool mousemove {int(x)} {int(y)}")
-        self._exec("xdotool click --repeat 2 --delay 100 1")
+        # xdotool click for n clicks
+        self._exec(f"xdotool click --repeat {int(clicks)} {btn_num}")
+
+    def tripleClick(self, x=None, y=None, button='left', interval=0.0, **kwargs):
+        """Compat alias for tripleClick."""
+        self.click(x, y, clicks=3, button=button, interval=interval)
 
     def rightClick(self, x=None, y=None, interval=0.0, **kwargs):
         logger.info(f"Local RightClick: x={x}, y={y}")

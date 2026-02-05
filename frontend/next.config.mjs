@@ -13,6 +13,10 @@ const nextConfig = {
                 source: '/vnc/:path*',
                 destination: 'http://127.0.0.1:6080/:path*',
             },
+            {
+                source: '/api/chat_stream',
+                destination: 'http://127.0.0.1:8000/chat',
+            }
         ];
     },
 };

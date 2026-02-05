@@ -80,6 +80,10 @@ class GroundingProxy:
     def rightClick(self, *args, **kwargs):
         """Compat alias for rightClick."""
         return "agent.rightClick()"
+
+    def tripleClick(self, *args, **kwargs):
+        """Compat alias for tripleClick."""
+        return "agent.click(clicks=3)"
         
     def scroll(self, clicks, *args, **kwargs):
         """Compat alias for scroll."""
