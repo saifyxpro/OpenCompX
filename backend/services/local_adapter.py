@@ -309,6 +309,8 @@ def start_container():
         safe_text = text.replace("'", "'\\''")
         self._exec(f"echo -n '{safe_text}' | xclip -selection clipboard")
 
+    def get_clipboard(self) -> str:
+        """Get clipboard content."""
         return self._exec("xclip -selection clipboard -o", timeout=5).stdout
 
     def wait_for_vnc(self, timeout: int = 15) -> bool:
