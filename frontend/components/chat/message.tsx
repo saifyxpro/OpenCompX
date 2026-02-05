@@ -116,7 +116,7 @@ function ActionMessage({ message, className }: ActionMessageProps) {
         isPending && "border-amber-200 bg-amber-50/30",
         isCompleted && "border-emerald-200 bg-emerald-50/30",
         isFailed && "border-red-200 bg-red-50/30",
-        !isPending && !isCompleted && !isFailed && "border-slate-200"
+        !isPending && !isCompleted && !isFailed && "border-slate-200 hover:border-slate-300"
       )}>
         {/* Action Header */}
         <div className="flex items-center justify-between px-3 py-2.5">
@@ -256,27 +256,25 @@ export function ChatMessage({ message, className }: ChatMessageProps) {
           <div className="flex-shrink-0 w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center">
             <Bot className="w-4 h-4 text-slate-600" />
           </div>
-          <div className="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl rounded-bl-md shadow-sm min-w-0 max-w-[calc(100%-3rem)]">
+          <div className="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl rounded-bl-md shadow-sm min-w-0 max-w-[calc(100%-3rem)] hover:shadow-md transition-shadow">
             <div className="text-sm text-slate-700 prose prose-sm prose-slate max-w-none overflow-hidden break-words">
-              <div className="text-sm text-slate-700 prose prose-sm prose-slate max-w-none overflow-hidden break-words">
-                <MemoizedReactMarkdown>
-                  {(() => {
-                    try {
-                      // Try to parse content as JSON to extract natural language reflection
-                      const parsed = JSON.parse(message.content);
-                      if (typeof parsed === 'object' && parsed !== null) {
-                        // Prefer reflection, then thoughts, then plan
-                        const naturalText = parsed.reflection || parsed.thoughts || parsed.reflection_thoughts || parsed.plan;
-                        if (naturalText) return naturalText;
-                      }
-                      return message.content;
-                    } catch (e) {
-                      // Not JSON, return original content
-                      return message.content;
+              <MemoizedReactMarkdown>
+                {(() => {
+                  try {
+                    // Try to parse content as JSON to extract natural language reflection
+                    const parsed = JSON.parse(message.content);
+                    if (typeof parsed === 'object' && parsed !== null) {
+                      // Prefer reflection, then thoughts, then plan
+                      const naturalText = parsed.reflection || parsed.thoughts || parsed.reflection_thoughts || parsed.plan;
+                      if (naturalText) return naturalText;
                     }
-                  })()}
-                </MemoizedReactMarkdown>
-              </div>
+                    return message.content;
+                  } catch (e) {
+                    // Not JSON, return original content
+                    return message.content;
+                  }
+                })()}
+              </MemoizedReactMarkdown>
             </div>
           </div>
         </div>

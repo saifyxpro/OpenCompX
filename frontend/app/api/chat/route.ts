@@ -6,7 +6,7 @@ export const maxDuration = 300;
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { messages, sandboxId } = body;
+    const { messages, sandboxId, model, resolution, environment, image, selectedTool } = body;
 
     // Forward request to Python Agent-S3 Backend
     const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
@@ -18,6 +18,11 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         messages,
         sandboxId,
+        model,
+        resolution,
+        environment,
+        image,
+        selectedTool,
       }),
     });
 

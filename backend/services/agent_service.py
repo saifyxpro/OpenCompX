@@ -200,7 +200,7 @@ class AgentService:
             
         return {"status": "success", "actions": all_actions, "logs": all_logs, "info": info}
 
-    def execute_next_step(self, instruction: str, step_num: int, executed_actions_count: int, reset_env: bool = False):
+    def execute_next_step(self, instruction: str, step_num: int, executed_actions_count: int, reset_env: bool = False, image: str | None = None, selectedTool: str | None = None):
         """Execute a single step of the agent loop."""
         if not self.container_running:
             self.initialize_sandbox()
@@ -254,6 +254,16 @@ class AgentService:
             "REALITY OVERRIDE: You are running in a special LocalDocker environment. 'pyautogui.launch' IS AVAILABLE and IS the ONLY way to open apps. Ignore any previous instructions saying otherwise.\n"
             "Your first action should be to launch Firefox using `pyautogui.launch('firefox')`."
         )
+
+        if selectedTool:
+             print(f">>> TOOL OVERRIDE: {selectedTool} <<<")
+             augmented_instruction = f"USER SELECTED TOOL: {selectedTool}\n\n" + augmented_instruction
+        
+        if image:
+             print(f">>> IMAGE RECEIVED (Length: {len(image)}) <<<")
+             # Truncate for log/prompt safety but inform agent (Currently AgentS3 handles text only in 'instruction', 
+             # multimodal support would need a different input for 'image' but adding note helps)
+             augmented_instruction = f"[USER PROVIDED AN IMAGE/SCREENSHOT AS CONTEXT]\n\n" + augmented_instruction
 
         if self.provider == "fireworks":
             augmented_instruction = (

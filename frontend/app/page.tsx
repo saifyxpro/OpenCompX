@@ -79,7 +79,7 @@ function DesktopViewer({
   const showStandby = !showLoading && !showDesktop;
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-white rounded-[28px] p-2 border border-slate-200 shadow-sm transition-colors overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl p-3 border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-md overflow-hidden">
       {/* Desktop Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-center gap-3">
@@ -218,7 +218,7 @@ function ChatPanel({
   onStopSandbox: () => void;
 }) {
   return (
-    <div className="w-full lg:w-[420px] flex flex-col min-h-0 bg-white dark:bg-[#1a1a1a] rounded-3xl p-2 border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+    <div className="w-full lg:w-[450px] flex flex-col min-h-0 bg-white dark:bg-[#1a1a1a] rounded-xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-300 hover:shadow-md overflow-hidden">
       {/* Chat Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-center gap-2">

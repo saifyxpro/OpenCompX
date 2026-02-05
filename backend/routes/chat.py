@@ -15,11 +15,13 @@ class ChatRequest(BaseModel):
     sandboxId: str | None = None
     model: str = "openai"
     resolution: list[int] | None = None
+    image: str | None = None
+    selectedTool: str | None = None
 
     class Config:
         extra = "ignore"
 
-async def event_generator(instruction: str, existing_sandbox_id: str | None, resolution: list[int] | None, reset_env: bool = False):
+async def event_generator(instruction: str, existing_sandbox_id: str | None, resolution: list[int] | None, reset_env: bool = False, image: str | None = None, selectedTool: str | None = None):
     """Generate SSE events with proper structured format for frontend consumption."""
     
     try:
@@ -40,7 +42,7 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None, res
             # Run one step (blocking inside thread)
             # Pass reset_env only for step 0
             should_reset = reset_env if step == 0 else False
-            result = await asyncio.to_thread(agent_service.execute_next_step, instruction, step, executed_count, should_reset)
+            result = await asyncio.to_thread(agent_service.execute_next_step, instruction, step, executed_count, should_reset, image=image, selectedTool=selectedTool)
             
             if result["status"] == "error":
                  yield f"event: error\ndata: {json.dumps({'content': result['message']})}\n\n"
@@ -106,7 +108,7 @@ async def chat(request: ChatRequest):
     should_reset_env = len(request.messages) == 1
     
     return StreamingResponse(
-        event_generator(last_message, request.sandboxId, request.resolution, should_reset_env),
+        event_generator(last_message, request.sandboxId, request.resolution, should_reset_env, request.image, request.selectedTool),
         media_type="text/event-stream"
     )
 

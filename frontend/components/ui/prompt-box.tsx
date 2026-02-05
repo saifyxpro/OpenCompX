@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
 
@@ -13,10 +12,6 @@ const Tooltip = TooltipPrimitive.Root;
 const TooltipTrigger = TooltipPrimitive.Trigger;
 const TooltipContent = React.forwardRef<React.ElementRef<typeof TooltipPrimitive.Content>, React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> & { showArrow?: boolean }>(({ className, sideOffset = 4, showArrow = false, ...props }, ref) => (<TooltipPrimitive.Portal><TooltipPrimitive.Content ref={ref} sideOffset={sideOffset} className={cn("relative z-50 max-w-[280px] rounded-md bg-popover text-popover-foreground px-1.5 py-1 text-xs animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2", className)} {...props}>{props.children}{showArrow && <TooltipPrimitive.Arrow className="-my-px fill-popover" />}</TooltipPrimitive.Content></TooltipPrimitive.Portal>));
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
-const Popover = PopoverPrimitive.Root;
-const PopoverTrigger = PopoverPrimitive.Trigger;
-const PopoverContent = React.forwardRef<React.ElementRef<typeof PopoverPrimitive.Content>, React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>>(({ className, align = "center", sideOffset = 4, ...props }, ref) => (<PopoverPrimitive.Portal><PopoverPrimitive.Content ref={ref} align={align} sideOffset={sideOffset} className={cn("z-50 w-64 rounded-xl bg-popover dark:bg-[#303030] p-2 text-popover-foreground dark:text-white shadow-md outline-none animate-in data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2", className)} {...props} /></PopoverPrimitive.Portal>));
-PopoverContent.displayName = PopoverPrimitive.Content.displayName;
 const Dialog = DialogPrimitive.Root;
 const DialogPortal = DialogPrimitive.Portal;
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -27,7 +22,6 @@ DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 // --- SVG Icon Components ---
 const PlusIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}> <path d="M12 5V19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /> <path d="M5 12H19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /> </svg>);
-const Settings2Icon = (props: React.SVGProps<SVGSVGElement>) => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}> <path d="M20 7h-9" /> <path d="M14 17H5" /> <circle cx="17" cy="17" r="3" /> <circle cx="7" cy="7" r="3" /> </svg>);
 const SendIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}> <path d="M12 5.25L12 18.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /> <path d="M18.75 12L12 5.25L5.25 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /> </svg>);
 const XIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}> <line x1="18" y1="6" x2="6" y2="18" /> <line x1="6" y1="6" x2="18" y2="18" /> </svg>);
 const GlobeIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>);
@@ -40,15 +34,23 @@ const toolsList = [
     { id: 'createImage', name: 'Create an image', shortName: 'Image', icon: PaintBrushIcon },
     { id: 'searchWeb', name: 'Search the web', shortName: 'Search', icon: GlobeIcon },
     { id: 'writeCode', name: 'Write or code', shortName: 'Write', icon: PencilIcon },
-    { id: 'deepResearch', name: 'Run deep research', shortName: 'Deep Search', icon: TelescopeIcon, extra: '5 left' },
+    { id: 'deepResearch', name: 'Run deep research', shortName: 'Deep Search', icon: TelescopeIcon },
     { id: 'thinkLonger', name: 'Think for longer', shortName: 'Think', icon: LightbulbIcon },
 ];
+
+interface Tool {
+    id: string;
+    name: string;
+    shortName: string;
+    icon: React.FC<React.SVGProps<SVGSVGElement>>;
+}
 
 interface PromptBoxProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     image?: string | null;
     onImageChange?: (image: string | null) => void;
     selectedTool?: string | null;
     onToolChange?: (tool: string | null) => void;
+    className?: string;
 }
 
 export const PromptBox = React.forwardRef<HTMLTextAreaElement, PromptBoxProps>(
@@ -56,7 +58,6 @@ export const PromptBox = React.forwardRef<HTMLTextAreaElement, PromptBoxProps>(
         const internalTextareaRef = React.useRef<HTMLTextAreaElement>(null);
         const fileInputRef = React.useRef<HTMLInputElement>(null);
         const [value, setValue] = React.useState("");
-        const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
         const [isImageDialogOpen, setIsImageDialogOpen] = React.useState(false);
 
         React.useImperativeHandle(ref, () => internalTextareaRef.current!, []);
@@ -104,7 +105,7 @@ export const PromptBox = React.forwardRef<HTMLTextAreaElement, PromptBoxProps>(
         const ActiveToolIcon = activeTool?.icon;
 
         return (
-            <div className={cn("flex flex-col rounded-3xl p-2 shadow-sm transition-colors bg-white border dark:bg-[#303030] dark:border-transparent cursor-text", className)}>
+            <div className={cn("flex flex-col rounded-3xl p-2 shadow-sm transition-colors bg-white border border-slate-200 dark:bg-[#303030] dark:border-transparent cursor-text", className)}>
                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
 
                 {image && (
@@ -152,31 +153,6 @@ export const PromptBox = React.forwardRef<HTMLTextAreaElement, PromptBoxProps>(
                                 </TooltipContent>
                             </Tooltip>
 
-                            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <PopoverTrigger asChild>
-                                            <button type="button" className="flex h-8 items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors focus-visible:outline-none">
-                                                <Settings2Icon className="h-4 w-4" />
-                                                {!selectedTool && 'Tools'}
-                                            </button>
-                                        </PopoverTrigger>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" showArrow={true}><p>Explore Tools</p></TooltipContent>
-                                </Tooltip>
-                                <PopoverContent side="top" align="start">
-                                    <div className="flex flex-col gap-1">
-                                        {toolsList.map(tool => (
-                                            <button key={tool.id} onClick={() => { onToolChange?.(tool.id); setIsPopoverOpen(false); }} className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-accent dark:hover:bg-[#515151]">
-                                                <tool.icon className="h-4 w-4" />
-                                                <span>{tool.name}</span>
-                                                {tool.extra && <span className="ml-auto text-xs text-muted-foreground dark:text-gray-400">{tool.extra}</span>}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-
                             {activeTool && (
                                 <>
                                     <div className="h-4 w-px bg-border dark:bg-gray-600" />
@@ -201,8 +177,8 @@ export const PromptBox = React.forwardRef<HTMLTextAreaElement, PromptBoxProps>(
                             </div>
                         </div>
                     </TooltipProvider>
-                </div>
-            </div>
+                </div >
+            </div >
         );
     }
 );
