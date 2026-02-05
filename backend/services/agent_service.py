@@ -21,6 +21,41 @@ except ImportError as e:
     AgentS3 = None
     OSWorldACI = None
 
+class GroundingProxy:
+    """
+    Acts as a proxy for the OSWorldACI (UI-TARS) agent.
+    
+    Purpose: 
+    - Allows the Planner (Agent-S) to run WITHOUT seeing the screenshot (saving tokens).
+    - When the Planner calls the Grounder, this proxy re-injects the real screenshot 
+      that was cached from the latest observation.
+    """
+    def __init__(self, real_grounder):
+        self.real_grounder = real_grounder
+        self.latest_screenshot = None
+        
+    def update_screenshot(self, screenshot: bytes):
+        """Update the cached screenshot."""
+        self.latest_screenshot = screenshot
+        
+    def predict(self, *args, **kwargs):
+        """Intercept the grounding call and inject the real screenshot."""
+        # If we have a cached screenshot, inject it into the observation
+        if self.latest_screenshot:
+            if "observation" in kwargs:
+                kwargs["observation"]["screenshot"] = self.latest_screenshot
+            elif len(args) > 1 and isinstance(args[1], dict):
+                 # Handle positional args: (instruction, observation)
+                 args[1]["screenshot"] = self.latest_screenshot
+        
+        # Determine strict mode based on observation (heuristics)
+        # If Planner didn't see the screen, we need fairly strict grounding
+        return self.real_grounder.predict(*args, **kwargs)
+
+    def __getattr__(self, name):
+        """Delegate all other calls to the real grounder."""
+        return getattr(self.real_grounder, name)
+
 class AgentService:
     def __init__(self):
         load_dotenv()
@@ -164,10 +199,13 @@ class AgentService:
             width=self.ground_width,
             height=self.ground_height
         )
+        
+        # Wrap in Proxy to enable cost optimization (Text-Only Planner)
+        self.grounding_agent_proxy = GroundingProxy(self.grounding_agent)
 
         self.agent = AgentS3(
             engine_params,
-            self.grounding_agent,
+            self.grounding_agent_proxy, # Use proxy for AgentS3
             platform="linux",
             max_trajectory_length=50,
             enable_reflection=True

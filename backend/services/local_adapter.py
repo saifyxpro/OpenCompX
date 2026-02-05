@@ -146,6 +146,15 @@ class LocalDockerAdapter:
             self._exec(f"xdotool click {direction}")
             time.sleep(0.05)
     
+    # --- App Management ---
+    def launch(self, app_name: str, **kwargs):
+        """Launch an application in the container background."""
+        logger.info(f"Local Launch: {app_name}")
+        # Use nohup and set DISPLAY to ensure it runs in background
+        cmd = f"nohup {app_name} > /dev/null 2>&1 &"
+        self._exec(cmd)
+        time.sleep(2) # Wait for app to appear
+
     # --- Keyboard Functions ---
     def write(self, message, interval=0.0, **kwargs):
         logger.info(f"Local Write: {message[:50]}...")

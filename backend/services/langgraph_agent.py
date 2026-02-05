@@ -92,6 +92,12 @@ class LangGraphAgentService:
                  if user_image:
                      current_instruction = f"[USER PROVIDED AN IMAGE/SCREENSHOT AS CONTEXT]\n\n" + current_instruction
             
+            # Cost Optimization: Update Grounding Proxy with real screenshot
+            # But hide it from the Planner LLM to save tokens/cost
+            if hasattr(self.agent, "grounding_agent") and hasattr(self.agent.grounding_agent, "update_screenshot"):
+                self.agent.grounding_agent.update_screenshot(screenshot_bytes)
+                obs["screenshot"] = b"" # Strip or reduce size
+            
             info, action = self.agent.predict(instruction=current_instruction, observation=obs)
             
             # 3. Process Result
@@ -139,10 +145,17 @@ class LangGraphAgentService:
                 continue
                 
             try:
-                # Sanitize & Intercept (simplified from agent_service.py)
+                # Sanitize & Intercept
                 sanitized_act = act.replace("import subprocess", "pass")
                 sanitized_act = sanitized_act.replace("import pyautogui;", "pass;")
                 sanitized_act = sanitized_act.replace("import pyautogui", "pass")
+
+                # Interceptor: Catch "Start Menu" usage and convert to direct launch
+                lower_act = sanitized_act.lower()
+                if "hotkey('win')" in lower_act and ("write('firefox')" in lower_act or "write('chrome')" in lower_act):
+                    logger.info(">>> INTERCEPTING: Converting flaky 'Start Menu' launch to direct launch() <<<")
+                    app_name = "firefox" if "firefox" in lower_act else "google-chrome"
+                    sanitized_act = f"pyautogui.launch('{app_name}')"
                 
                 # Execute
                 import subprocess as _subprocess
