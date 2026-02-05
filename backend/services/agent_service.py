@@ -38,6 +38,20 @@ class GroundingProxy:
         """Update the cached screenshot."""
         self.latest_screenshot = screenshot
         
+    # --- Compatibility Methods (Fixing AttributeErrors from Planner) ---
+    def screenshot(self):
+        """Mock screenshot - LangGraph handles the actual capture."""
+        return "Screenshot taken"
+        
+    def sleep(self, seconds):
+        """Mock sleep - LangGraph handles timing."""
+        time.sleep(min(seconds, 5)) # Cap sleep
+        return f"Waited {seconds}s"
+        
+    def launch(self, app_name):
+        """Mock launch - The Interceptor in LangGraph handles this or LocalDockerAdapter."""
+        return f"Launched {app_name}"
+        
     def predict(self, *args, **kwargs):
         """Intercept the grounding call and inject the real screenshot."""
         # If we have a cached screenshot, inject it into the observation
