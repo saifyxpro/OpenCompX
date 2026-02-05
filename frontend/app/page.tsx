@@ -32,7 +32,7 @@ function Header() {
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
       <Link href="/" className="flex items-center gap-3 group">
-        <div className="size-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow">
+        <div className="size-10 rounded-xl bg-slate-900 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-slate-900/20 group-hover:shadow-slate-900/40 transition-shadow">
           OX
         </div>
         <div className="flex flex-col">
@@ -106,10 +106,10 @@ function DesktopViewer({
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white">
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl">
+                <div className="w-16 h-16 rounded-2xl bg-slate-900 flex items-center justify-center shadow-xl">
                   <Loader variant="square" className="text-white w-8 h-8" />
                 </div>
-                <div className="absolute -inset-2 bg-blue-500/20 rounded-3xl blur-xl animate-pulse" />
+                <div className="absolute -inset-2 bg-slate-900/20 rounded-3xl blur-xl animate-pulse" />
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium text-slate-900">Starting Desktop</p>
@@ -130,12 +130,12 @@ function DesktopViewer({
               )}
               allow="clipboard-read; clipboard-write"
             />
-            
+
             {/* Agent Working Indicator - Bottom Glow */}
             {!isControlOverride && (
-              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-blue-500/20 via-blue-400/10 to-transparent pointer-events-none animate-pulse" />
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-900/10 via-slate-900/5 to-transparent pointer-events-none animate-pulse" />
             )}
-            
+
             {/* Agent Control Badge */}
             <div className="absolute bottom-4 right-4 z-10">
               {!isControlOverride ? (
@@ -144,14 +144,14 @@ function DesktopViewer({
                   className="bg-white/95 backdrop-blur-sm text-slate-700 border border-slate-200 shadow-lg hover:bg-white hover:shadow-xl transition-all"
                   size="sm"
                 >
-                  <Bot className="w-4 h-4 mr-2 text-blue-600 animate-pulse" />
+                  <Bot className="w-4 h-4 mr-2 text-slate-900 animate-pulse" />
                   Agent Active
                   <MousePointer2 className="w-3 h-3 ml-2 text-slate-400" />
                 </Button>
               ) : (
                 <Button
                   onClick={() => setIsControlOverride(false)}
-                  className="bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-all"
+                  className="bg-slate-900 text-white shadow-lg hover:bg-slate-800 transition-all"
                   size="sm"
                 >
                   <Play className="w-4 h-4 mr-2" />
@@ -217,9 +217,9 @@ function ChatPanel({
           <span className="text-sm font-semibold text-slate-900">Chat</span>
         </div>
         {sandboxId && (
-          <Button 
-            onClick={onStopSandbox} 
-            variant="error" 
+          <Button
+            onClick={onStopSandbox}
+            variant="error"
             size="sm"
             className="h-7 text-xs"
           >
@@ -235,8 +235,8 @@ function ChatPanel({
           <ChatList messages={messages} className="p-4" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center p-4">
-            <ExamplePrompts 
-              onPromptClick={onExampleClick} 
+            <ExamplePrompts
+              onPromptClick={onExampleClick}
               className="w-full"
             />
           </div>
@@ -271,7 +271,7 @@ export default function Home() {
   const [timeRemaining, setTimeRemaining] = useState<number>(SANDBOX_TIMEOUT_MS / 1000);
   const [isTabVisible, setIsTabVisible] = useState<boolean>(true);
   const [isControlOverride, setIsControlOverride] = useState(false);
-  
+
   // Refs
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iFrameWrapperRef = useRef<HTMLDivElement>(null);
@@ -397,7 +397,7 @@ export default function Home() {
   return (
     <div className="h-screen flex flex-col bg-slate-50">
       <Header />
-      
+
       <main className="flex-1 flex flex-col lg:flex-row gap-4 p-4 lg:p-6 min-h-0">
         {/* Desktop Viewer */}
         <DesktopViewer

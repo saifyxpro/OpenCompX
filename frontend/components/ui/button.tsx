@@ -7,7 +7,7 @@ const buttonVariants = cva(
   [
     "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg",
     "text-sm font-medium transition-all duration-200",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/20",
     "disabled:pointer-events-none disabled:opacity-50",
     "cursor-pointer",
   ].join(" "),
@@ -15,14 +15,14 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-slate-900 text-white hover:bg-slate-800 shadow-sm",
-        primary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
+        primary: "bg-slate-900 text-white hover:bg-slate-800 shadow-sm",
         secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
         ghost: "hover:bg-slate-100 text-slate-700",
         outline: "border border-slate-200 bg-white hover:bg-slate-50 text-slate-700",
         error: "bg-red-500 text-white hover:bg-red-600 shadow-sm",
-        accent: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
+        accent: "bg-slate-900 text-white hover:bg-slate-800 shadow-sm",
         muted: "bg-slate-100 text-slate-600 hover:bg-slate-200",
-        link: "text-blue-600 underline-offset-4 hover:underline",
+        link: "text-slate-900 underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2",
@@ -42,7 +42,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   loading?: boolean;
 }
@@ -50,7 +50,7 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, loading = false, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
-    
+
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
