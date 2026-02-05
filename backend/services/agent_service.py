@@ -156,7 +156,7 @@ class AgentService:
             engine_params,
             self.grounding_agent,
             platform="linux",
-            max_trajectory_length=15,
+            max_trajectory_length=50,
             enable_reflection=True
         )
         print("Agent S3 Initialized!")
@@ -170,7 +170,7 @@ class AgentService:
         
         current_instruction = instruction
         
-        for i in range(10):
+        for i in range(50):
             result = self.execute_next_step(current_instruction, i, executed_count)
             
             # Update info with latest plan/reflection

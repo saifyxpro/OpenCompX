@@ -36,6 +36,7 @@ interface ChatContextType extends ChatState {
   ) => void;
   model: ComputerModel;
   setModel: (model: ComputerModel) => void;
+  startTime: number | null;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -55,7 +56,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const onSandboxCreatedRef = useRef<
     ((sandboxId: string, vncUrl: string) => void) | undefined
   >(undefined);
+  > (undefined);
   const [model, setModel] = useState<ComputerModel>("openai");
+  const [startTime, setStartTime] = useState<number | null>(null);
 
   const parseSSEEvent = (data: string): ParsedSSEEvent<typeof model> | null => {
     try {
@@ -131,6 +134,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     if (isLoading) return;
 
     setIsLoading(true);
+    setStartTime(Date.now());
     setError(null);
 
     const userMessage: ChatMessage = {
@@ -204,10 +208,14 @@ export function ChatProvider({ children }: ChatProviderProps) {
             if (parsedEvent) {
               if (parsedEvent.type === SSEEventType.DONE) {
                 setMessages((prev) => {
+                  const duration = startTime ? Date.now() - startTime : 0;
+                  const seconds = Math.floor(duration / 1000);
+                  const durationStr = seconds > 60 ? `${Math.floor(seconds / 60)}m ${seconds % 60}s` : `${seconds}s`;
+
                   const systemMessage: SystemChatMessage = {
                     role: "system",
                     id: `system-${Date.now()}-${responseCounter++}`, // Unique ID
-                    content: "Task completed",
+                    content: `Task completed (${durationStr})`,
                   };
 
                   return [...prev, systemMessage];
@@ -278,10 +286,14 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
             case SSEEventType.DONE:
               setMessages((prev) => {
+                const duration = startTime ? Date.now() - startTime : 0;
+                const seconds = Math.floor(duration / 1000);
+                const durationStr = seconds > 60 ? `${Math.floor(seconds / 60)}m ${seconds % 60}s` : `${seconds}s`;
+
                 const systemMessage: SystemChatMessage = {
                   role: "system",
                   id: `system-${Date.now()}`,
-                  content: parsedEvent.content || "Task completed",
+                  content: parsedEvent.content || `Task completed (${durationStr})`,
                 };
 
                 return [...prev, systemMessage];
@@ -398,6 +410,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     setSelectedTool,
     sendMessage,
     stopGeneration,
+    startTime,
     clearMessages,
     handleSubmit,
     model,

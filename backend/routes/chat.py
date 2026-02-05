@@ -38,10 +38,10 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None, res
         # 2. Start Agent Step
         yield f"event: reasoning\ndata: {json.dumps({'content': 'Analyzing screen and planning actions...'})}\n\n"
         
-        # 3. Start Agent Loop for Max 10 steps
+        # 3. Start Agent Loop for Max 50 steps
         executed_count = 0
         
-        for step in range(10):
+        for step in range(50):
             # Run one step (blocking inside thread)
             # Pass reset_env only for step 0
             should_reset = reset_env if step == 0 else False

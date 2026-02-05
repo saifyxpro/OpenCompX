@@ -11,6 +11,7 @@ import {
   Play,
   Square,
   Loader2,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -56,6 +57,29 @@ function Header() {
   );
 }
 
+/** Timer Component */
+function Timer({ startTime }: { startTime: number }) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsed(Date.now() - startTime);
+    }, 1000);
+    setElapsed(Date.now() - startTime);
+    return () => clearInterval(interval);
+  }, [startTime]);
+
+  const seconds = Math.floor(elapsed / 1000);
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+
+  return (
+    <span className="font-mono text-xs text-slate-600">
+      {m}m {s}s
+    </span>
+  );
+}
+
 /** Desktop Viewer Component */
 function DesktopViewer({
   vncUrl,
@@ -73,6 +97,7 @@ function DesktopViewer({
   setIsControlOverride: (value: boolean) => void;
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
   iFrameWrapperRef: React.RefObject<HTMLDivElement | null>;
+  startTime?: number | null;
 }) {
   const showLoading = isLoading;
   const showDesktop = sandboxId && vncUrl;
@@ -98,6 +123,13 @@ function DesktopViewer({
             <span className="text-xs font-medium">Desktop View</span>
           </div>
         </div>
+        {isLoading && startTime && (
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white border border-slate-200 shadow-sm">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            <Timer startTime={startTime} />
+          </div>
+        )}
       </div>
 
       {/* Desktop Content */}
@@ -297,6 +329,7 @@ export default function Home() {
     clearMessages,
     handleSubmit,
     onSandboxCreated,
+    startTime,
   } = useChat();
 
   // Visibility tracking
@@ -412,6 +445,7 @@ export default function Home() {
           setIsControlOverride={setIsControlOverride}
           iframeRef={iframeRef}
           iFrameWrapperRef={iFrameWrapperRef}
+          startTime={startTime}
         />
 
         {/* Chat Panel */}
