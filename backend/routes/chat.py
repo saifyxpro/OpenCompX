@@ -51,11 +51,14 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None, res
                  yield f"event: error\ndata: {json.dumps({'content': result['message']})}\n\n"
                  return
 
-            # Yield reasoning/plan
+            # Yield reasoning/plan BEFORE actions (agent's narrative explanation)
             if result.get("info"):
                  plan = result["info"].get("plan", "")
-                 if plan:
-                     yield f"event: reasoning\ndata: {json.dumps({'content': plan})}\n\n"
+                 if plan and not plan.strip().startswith("```"):
+                     # Extract narrative (text before code blocks)
+                     narrative = plan.split("```")[0].strip()
+                     if narrative and len(narrative) > 10:  # Meaningful text
+                         yield f"event: reasoning\ndata: {json.dumps({'content': narrative})}\n\n"
 
             # Yield actions and logs
             actions = result.get("actions", [])
