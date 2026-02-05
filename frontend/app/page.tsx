@@ -89,6 +89,7 @@ function DesktopViewer({
   setIsControlOverride,
   iframeRef,
   iFrameWrapperRef,
+  startTime,
 }: {
   vncUrl: string | null;
   isLoading: boolean;
