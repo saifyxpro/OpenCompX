@@ -79,7 +79,7 @@ function DesktopViewer({
   const showStandby = !showLoading && !showDesktop;
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 bg-white rounded-[28px] p-2 border border-slate-200 shadow-sm transition-colors overflow-hidden">
       {/* Desktop Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-center gap-3">
@@ -166,7 +166,7 @@ function DesktopViewer({
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
             <div className="flex flex-col items-center gap-6 max-w-md text-center px-6">
               <div className="relative">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-[28px] bg-slate-100 flex items-center justify-center">
                   <Power className="w-10 h-10 text-slate-400" />
                 </div>
               </div>
@@ -191,6 +191,10 @@ function ChatPanel({
   messages,
   input,
   setInput,
+  image,
+  setImage,
+  selectedTool,
+  setSelectedTool,
   onSubmit,
   isLoading,
   onStop,
@@ -201,6 +205,10 @@ function ChatPanel({
   messages: any[];
   input: string;
   setInput: (value: string) => void;
+  image: string | null;
+  setImage: (value: string | null) => void;
+  selectedTool: string | null;
+  setSelectedTool: (value: string | null) => void;
   onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
   onStop: () => void;
@@ -209,7 +217,7 @@ function ChatPanel({
   onStopSandbox: () => void;
 }) {
   return (
-    <div className="w-full lg:w-[420px] flex flex-col min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="w-full lg:w-[420px] flex flex-col min-h-0 bg-white rounded-[28px] p-2 border border-slate-200 shadow-sm overflow-hidden">
       {/* Chat Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-center gap-2">
@@ -248,6 +256,10 @@ function ChatPanel({
         <ChatInput
           input={input}
           setInput={setInput}
+          image={image}
+          setImage={setImage}
+          selectedTool={selectedTool}
+          setSelectedTool={setSelectedTool}
           onSubmit={onSubmit}
           isLoading={isLoading}
           onStop={onStop}
@@ -282,6 +294,10 @@ export default function Home() {
     isLoading: chatLoading,
     input,
     setInput,
+    image,
+    setImage,
+    selectedTool,
+    setSelectedTool,
     sendMessage,
     stopGeneration,
     clearMessages,
@@ -415,6 +431,10 @@ export default function Home() {
           messages={messages}
           input={input}
           setInput={setInput}
+          image={image}
+          setImage={setImage}
+          selectedTool={selectedTool}
+          setSelectedTool={setSelectedTool}
           onSubmit={onSubmit}
           isLoading={chatLoading}
           onStop={stopGeneration}

@@ -26,6 +26,10 @@ interface ChatContextType extends ChatState {
   clearMessages: () => void;
   setInput: (input: string) => void;
   input: string;
+  image: string | null;
+  setImage: (image: string | null) => void;
+  selectedTool: string | null;
+  setSelectedTool: (tool: string | null) => void;
   handleSubmit: (e: React.FormEvent) => string | undefined;
   onSandboxCreated: (
     callback: (sandboxId: string, vncUrl: string) => void
@@ -45,6 +49,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [input, setInput] = useState("");
+  const [image, setImage] = useState<string | null>(null);
+  const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const onSandboxCreatedRef = useRef<
     ((sandboxId: string, vncUrl: string) => void) | undefined
@@ -156,6 +162,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
           environment,
           resolution,
           model,
+          image,
+          selectedTool,
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -377,6 +385,10 @@ export function ChatProvider({ children }: ChatProviderProps) {
     error,
     input,
     setInput,
+    image,
+    setImage,
+    selectedTool,
+    setSelectedTool,
     sendMessage,
     stopGeneration,
     clearMessages,

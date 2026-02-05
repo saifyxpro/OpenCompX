@@ -184,11 +184,11 @@
   overflow-wrap: break-word;
 }
 
-/* Focus styles */
-:focus-visible {
+/* Focus styles - Rely on Tailwind classes */
+/* :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
-}
+} */
 
 /* Selection */
 ::selection {

@@ -26,12 +26,21 @@ export function ChatInput({
   onStop,
   disabled = false,
   placeholder = "Ask the agent to do something...",
+  image,
+  setImage,
+  selectedTool,
+  setSelectedTool,
   className,
-}: ChatInputProps) {
+}: ChatInputProps & {
+  image?: string | null;
+  setImage?: (img: string | null) => void;
+  selectedTool?: string | null;
+  setSelectedTool?: (tool: string | null) => void;
+}) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || disabled || isLoading) return;
+    if ((!input.trim() && !image) || disabled || isLoading) return;
     onSubmit(e);
   };
 
@@ -47,6 +56,10 @@ export function ChatInput({
       <PromptBox
         value={input}
         onChange={(e) => setInput(e.target.value)}
+        image={image}
+        onImageChange={setImage}
+        selectedTool={selectedTool}
+        onToolChange={setSelectedTool}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
