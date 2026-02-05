@@ -85,12 +85,14 @@ class LangGraphAgentService:
                     "# MISSION & IDENTITY\n"
                     "You are an advanced autonomous AI agent capable of controlling a computer to accomplish complex tasks. "
                     "Your goal is to complete the user's request efficiently and accurately. \n"
-                    "You are in a specialized LocalDocker container.\n"
-                    "PRIMARY TOOLSET (Use these methods on `agent` object if available, or direct code):\n"
-                    "- `agent.typewrite(text, interval)` or `pyautogui.write(text)`\n"
-                    "- `agent.click(x, y)`\n"
-                    "- `pyautogui.launch(app_name)` for apps like 'firefox'\n"
-                    "Start by launching Firefox with `pyautogui.launch('firefox')` if a browser is needed."
+                    "IMPORTANT: You are in a restricted environment.\n"
+                    "1. OUTPUT RAW PYTHON CODE ONLY. DO NOT USE MARKDOWN.\n"
+                    "2. Standard Agent S3 format is allowed (imports will be handled): \n"
+                    "   - `import pyautogui; pyautogui.click(x, y)`\n"
+                    "   - `import pyautogui; pyautogui.typewrite('text')`\n"
+                    "   - `agent.launch('firefox')` or `pyautogui.launch('firefox')`\n"
+                    "3. DO NOT use `computer.wait()`. Use `import time; time.sleep(seconds)`.\n"
+                    "Start by launching Firefox: `agent.launch('firefox')`"
                  )
                  
                  if user_image:

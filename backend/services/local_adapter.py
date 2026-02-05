@@ -92,11 +92,35 @@ class LocalDockerAdapter:
             if interval > 0:
                 time.sleep(interval)
     
-    def doubleClick(self, x=None, y=None, interval=0.0, button='left', **kwargs):
-        logger.info(f"Local DoubleClick: x={x}, y={y}")
         if x is not None and y is not None:
             self._exec(f"xdotool mousemove {int(x)} {int(y)}")
         self._exec("xdotool click --repeat 2 --delay 100 1")
+
+    # --- Keyboard / Text ---
+    def typewrite(self, text, interval=0.0, **kwargs):
+        """Type text using xdotool."""
+        logger.info(f"Local Typewrite: {text}")
+        # Escape single quotes for bash
+        safe_text = text.replace("'", "'\\''")
+        self._exec(f"xdotool type --delay {int(interval*1000)} '{safe_text}'")
+
+    def write(self, text, interval=0.0, **kwargs):
+        """Alias for typewrite."""
+        self.typewrite(text, interval, **kwargs)
+
+    # --- System / App Control ---
+    def sleep(self, seconds):
+        """Sleep (blocking)."""
+        logger.info(f"Local Sleep: {seconds}s")
+        time.sleep(float(seconds))
+
+    def launch(self, app_name):
+        """Launch an application in the background."""
+        logger.info(f"Local Launch: {app_name}")
+        # Try gtk-launch first, then direct execution
+        # We use nohup and disown to prevent blocking
+        cmd = f"nohup {app_name} > /dev/null 2>&1 &"
+        self._exec(cmd)
     
     def moveTo(self, x, y, duration=0.0, **kwargs):
         logger.info(f"Local MoveTo: x={x}, y={y}")
