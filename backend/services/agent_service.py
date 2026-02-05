@@ -52,6 +52,12 @@ class GroundingProxy:
         """Mock launch - The Interceptor in LangGraph handles this or LocalDockerAdapter."""
         return f"Launched {app_name}"
         
+    def typewrite(self, *args, **kwargs):
+        """Alias for write - fixes planner hallucinations."""
+        # Just return a mock string, the real execution happens in LangGraph if code is valid
+        # But if the planner calls `agent.typewrite`, we want it to succeed here so LangGraph can intercept it
+        return "Typed text"
+        
     def predict(self, *args, **kwargs):
         """Intercept the grounding call and inject the real screenshot."""
         # If we have a cached screenshot, inject it into the observation

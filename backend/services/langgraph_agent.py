@@ -85,7 +85,11 @@ class LangGraphAgentService:
                     "# MISSION & IDENTITY\n"
                     "You are an advanced autonomous AI agent capable of controlling a computer to accomplish complex tasks. "
                     "Your goal is to complete the user's request efficiently and accurately. \n"
-                    "You are in a specialized LocalDocker container. `pyautogui.launch` is your primary method for opening applications.\n"
+                    "You are in a specialized LocalDocker container.\n"
+                    "PRIMARY TOOLSET (Use these methods on `agent` object if available, or direct code):\n"
+                    "- `agent.typewrite(text, interval)` or `pyautogui.write(text)`\n"
+                    "- `agent.click(x, y)`\n"
+                    "- `pyautogui.launch(app_name)` for apps like 'firefox'\n"
                     "Start by launching Firefox with `pyautogui.launch('firefox')` if a browser is needed."
                  )
                  
@@ -94,9 +98,10 @@ class LangGraphAgentService:
             
             # Cost Optimization: Update Grounding Proxy with real screenshot
             # But hide it from the Planner LLM to save tokens/cost
+            # Cost Optimization: Update Grounding Proxy with real screenshot
             if hasattr(self.agent, "grounding_agent") and hasattr(self.agent.grounding_agent, "update_screenshot"):
                 self.agent.grounding_agent.update_screenshot(screenshot_bytes)
-                obs["screenshot"] = b"" # Strip or reduce size
+                # obs["screenshot"] = b""  <-- DISABLED: User requested full vision for Planner
             
             # CRITICAL LOOP FIX: Provide explicit text feedback since we removed the screenshot
             last_result = state.get("scratchpad", "")
@@ -152,9 +157,25 @@ class LangGraphAgentService:
             if act_upper in ["DONE", "FAIL", "WAIT", "SCROLL", "SCREENSHOT"]:
                 continue
                 
+            if act_upper in ["DONE", "FAIL", "WAIT", "SCROLL", "SCREENSHOT"]:
+                continue
+                
+            # CLEANUP: Strip Markdown Code Blocks if present
+            clean_act = act
+            if "```" in clean_act:
+                # Remove first line (```python) and last line (```)
+                lines = clean_act.split('\n')
+                if lines[0].strip().startswith("```"):
+                    lines = lines[1:]
+                if lines and lines[-1].strip() == "```":
+                    lines = lines[:-1]
+                clean_act = "\n".join(lines)
+            
+            clean_act = clean_act.strip()
+            
             try:
                 # Sanitize & Intercept
-                sanitized_act = act.replace("import subprocess", "pass")
+                sanitized_act = clean_act.replace("import subprocess", "pass")
                 sanitized_act = sanitized_act.replace("import pyautogui;", "pass;")
                 sanitized_act = sanitized_act.replace("import pyautogui", "pass")
 
