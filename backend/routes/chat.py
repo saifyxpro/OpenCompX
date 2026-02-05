@@ -87,14 +87,24 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None, res
             # Check termination
             if result["status"] == "done":
                 # Send the agent's final response (the summary/report from the plan)
-                final_response = result.get("info", {}).get("plan", "") or "Task completed"
-                yield f"event: reasoning\ndata: {json.dumps({'content': final_response})}\n\n"
+                plan = result.get("info", {}).get("plan", "")
+                reflection = result.get("info", {}).get("reflection", "")
+                
+                # If plan is just code (agent.done()), use reflection instead
+                if plan and ("agent.done()" in plan or "```python" in plan):
+                    final_response = reflection or "Task completed successfully."
+                else:
+                    final_response = plan or reflection or "Task completed"
+                
+                if final_response and final_response != "Task completed":
+                    yield f"event: reasoning\ndata: {json.dumps({'content': final_response})}\n\n"
                 yield f"event: done\ndata: {json.dumps({'content': 'Task completed'})}\n\n"
                 break
             elif result["status"] == "fail":
                 # For failures, also send the plan if available (might explain why it failed)
-                failure_info = result.get("info", {}).get("plan", "") or "Task failed"
-                yield f"event: reasoning\ndata: {json.dumps({'content': failure_info})}\n\n"
+                failure_info = result.get("info", {}).get("plan", "") or result.get("info", {}).get("reflection", "") or "Task failed"
+                if failure_info and failure_info != "Task failed":
+                    yield f"event: reasoning\ndata: {json.dumps({'content': failure_info})}\n\n"
                 yield f"event: done\ndata: {json.dumps({'content': 'Task failed'})}\n\n"
                 break
             
