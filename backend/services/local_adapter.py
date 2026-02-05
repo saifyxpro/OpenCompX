@@ -17,7 +17,7 @@ class LocalDockerAdapter:
     Uses docker exec to run xdotool/scrot commands inside the container.
     """
     
-    CONTAINER_NAME = "openmanus-desktop"
+    CONTAINER_NAME = "opencompx-desktop"
     DISPLAY = ":1"  # VNC display
     
     def __init__(self, container_name: str = None):
@@ -296,7 +296,7 @@ class LocalDockerAdapter:
         return False
 
 
-def is_container_running(container_name: str = "openmanus-desktop") -> bool:
+def is_container_running(container_name: str = "opencompx-desktop") -> bool:
     """Check if the desktop container is running."""
     try:
         result = subprocess.run(
