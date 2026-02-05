@@ -104,21 +104,21 @@ export const PromptBox = React.forwardRef<HTMLTextAreaElement, PromptBoxProps>(
         const ActiveToolIcon = activeTool?.icon;
 
         return (
-            <div className={cn("flex flex-col rounded-[28px] p-2 shadow-sm transition-colors bg-white border dark:bg-[#303030] dark:border-transparent cursor-text", className)}>
+            <div className={cn("flex flex-col rounded-3xl p-2 shadow-sm transition-colors bg-white border dark:bg-[#303030] dark:border-transparent cursor-text", className)}>
                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
 
                 {image && (
                     <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-                        <div className="relative mb-1 w-fit rounded-[1rem] px-1 pt-1">
+                        <div className="relative mb-1 w-fit rounded-xl px-1 pt-1">
                             <button type="button" className="transition-transform" onClick={() => setIsImageDialogOpen(true)}>
-                                <img src={image} alt="Image preview" className="h-14.5 w-14.5 rounded-[1rem]" />
+                                <img src={image} alt="Image preview" className="h-14.5 w-14.5 rounded-xl" />
                             </button>
                             <button onClick={handleRemoveImage} className="absolute right-2 top-2 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-white/50 dark:bg-[#303030] text-black dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151]" aria-label="Remove image">
                                 <XIcon className="h-4 w-4" />
                             </button>
                         </div>
                         <DialogContent>
-                            <img src={image} alt="Full size preview" className="w-full max-h-[95vh] object-contain rounded-[24px]" />
+                            <img src={image} alt="Full size preview" className="w-full max-h-[95vh] object-contain rounded-2xl" />
                         </DialogContent>
                     </Dialog>
                 )}
@@ -156,7 +156,7 @@ export const PromptBox = React.forwardRef<HTMLTextAreaElement, PromptBoxProps>(
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <PopoverTrigger asChild>
-                                            <button type="button" className="flex h-8 items-center gap-2 rounded-full p-2 text-sm text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-none focus-visible:ring-ring">
+                                            <button type="button" className="flex h-8 items-center gap-2 rounded-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-[#3a3a3a] hover:bg-gray-200 dark:hover:bg-[#454545] transition-colors focus-visible:outline-none">
                                                 <Settings2Icon className="h-4 w-4" />
                                                 {!selectedTool && 'Tools'}
                                             </button>
