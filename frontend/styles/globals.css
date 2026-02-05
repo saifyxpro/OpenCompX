@@ -1,105 +1,64 @@
 @import "tailwindcss";
 
 @theme {
-  /* "Polaris Clean" - Senior Architect Aesthetic */
-
-  /* Base Colors */
+  /* Modern Clean Design System */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 }
 
-/* Custom CSS Variables */
 :root {
-  /* HSL Values for Variables */
-  /* Pure White & Slate */
-  --background: oklch(100% 0 0);
-  /* #ffffff */
-  --foreground: oklch(20.5% 0.05 255);
-  /* #0f172a */
+  /* Clean Light Theme */
+  --background: #f8fafc;
+  --foreground: #0f172a;
 
-  --card: oklch(100% 0 0);
-  --card-foreground: oklch(20.5% 0.05 255);
+  --card: #ffffff;
+  --card-foreground: #0f172a;
 
-  --popover: oklch(100% 0 0);
-  --popover-foreground: oklch(20.5% 0.05 255);
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
 
-  /* Royal Blue Primary */
-  --primary: oklch(55% 0.2 260);
-  /* #2563eb */
-  --primary-foreground: oklch(98% 0 0);
+  /* Blue Primary */
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
 
   /* Slate Secondary */
-  --secondary: oklch(96% 0.01 255);
-  /* #f1f5f9 */
-  --secondary-foreground: oklch(20.5% 0.05 255);
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
 
-  --muted: oklch(96% 0.01 255);
-  --muted-foreground: oklch(55% 0.04 255);
-  /* #64748b */
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
 
-  --accent: oklch(96% 0.01 255);
-  --accent-foreground: oklch(20.5% 0.05 255);
+  --accent: #2563eb;
+  --accent-foreground: #ffffff;
 
-  --destructive: oklch(60% 0.2 20);
-  --destructive-foreground: oklch(98% 0 0);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
 
-  --border: oklch(92% 0.02 255);
-  /* #e2e8f0 */
-  --input: oklch(92% 0.02 255);
-  --ring: oklch(55% 0.2 260);
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #2563eb;
 
-  --radius: 0.5rem;
-
-  --glass-bg: rgba(255, 255, 255, 0.95);
-  --glass-border: rgba(148, 163, 184, 0.2);
-}
-
-.dark {
-  /* Minimal Dark Fallback */
-  --background: oklch(20% 0.05 255);
-  --foreground: oklch(98% 0 0);
-  --card: oklch(20% 0.05 255);
-  --card-foreground: oklch(98% 0 0);
-  --primary: oklch(65% 0.2 260);
-  --primary-foreground: oklch(20% 0.05 255);
-  --secondary: oklch(30% 0.05 255);
-  --secondary-foreground: oklch(98% 0 0);
-  --muted: oklch(30% 0.05 255);
-  --muted-foreground: oklch(70% 0.04 255);
-  --accent: oklch(30% 0.05 255);
-  --accent-foreground: oklch(98% 0 0);
-  --border: oklch(30% 0.05 255);
-  --input: oklch(30% 0.05 255);
-  --ring: oklch(65% 0.2 260);
+  --radius: 0.75rem;
 }
 
 @layer base {
@@ -112,34 +71,55 @@
     color: var(--foreground);
     font-feature-settings: "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
-  }
-
-  /* Minimal Grain Texture via Utility */
-  body::before {
-    content: "";
-    @apply fixed top-0 left-0 w-full h-full pointer-events-none z-50 opacity-[0.03];
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
+/* Modern Utilities */
 @utility glass-panel {
-  @apply bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-sm transition-all;
-  background-color: var(--glass-bg);
-  border-color: var(--glass-border);
+  @apply bg-white/80 backdrop-blur-xl border border-slate-200/60 shadow-sm;
 }
 
 @utility glass-card {
-  @apply bg-white border border-slate-100 shadow-sm rounded-lg transition-all hover:shadow-md;
+  @apply bg-white border border-slate-200 shadow-sm rounded-xl transition-all hover:shadow-md;
 }
 
-@utility neon-text {
-  @apply font-medium text-primary tracking-tight;
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* Minimal Scrollbar */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+.animate-fade-slide-in {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -147,5 +127,35 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Custom scrollbar utilities */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thumb-slate-200::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 2px;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background-color: rgba(37, 99, 235, 0.2);
 }

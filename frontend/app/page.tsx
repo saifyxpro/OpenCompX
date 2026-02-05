@@ -1,55 +1,297 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import {
-  MoonIcon,
-  SunIcon,
   Timer,
   Power,
-  Menu,
-  X,
-  ArrowUpRight,
   Bot,
   MousePointer2,
-  Sun,
+  Monitor,
+  MessageSquare,
+  Github,
+  Play,
+  Square,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { increaseTimeout, stopSandboxAction } from "@/app/actions";
-import { motion, AnimatePresence } from "framer-motion";
 import { ChatList } from "@/components/chat/message-list";
 import { ChatInput } from "@/components/chat/input";
 import { ExamplePrompts } from "@/components/chat/example-prompts";
 import { useChat } from "@/lib/chat-context";
-import Frame from "@/components/frame";
 import { Button } from "@/components/ui/button";
-import { Loader, AssemblyLoader } from "@/components/loader";
+import { Loader } from "@/components/loader";
 import Link from "next/link";
-import Logo from "@/components/logo";
-import { RepoBanner } from "@/components/repo-banner";
 import { SANDBOX_TIMEOUT_MS } from "@/lib/config";
-import { Surfing } from "@/components/surfing";
+
+// ============================================================================
+// COMPONENTS
+// ============================================================================
+
+/** Header Component */
+function Header() {
+  return (
+    <header className="flex items-center justify-between px-6 py-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
+      <Link href="/" className="flex items-center gap-3 group">
+        <div className="size-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow">
+          OX
+        </div>
+        <div className="flex flex-col">
+          <h1 className="text-xl font-semibold text-slate-900">OpenCompX</h1>
+          <span className="text-[10px] uppercase tracking-widest text-slate-500 font-medium">
+            Autonomous Desktop Agent
+          </span>
+        </div>
+      </Link>
+
+      <a
+        href="https://github.com/e2b-dev/opencompx"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors shadow-lg"
+      >
+        <Github className="w-4 h-4" />
+        <span className="hidden sm:inline">Star on GitHub</span>
+      </a>
+    </header>
+  );
+}
+
+/** Timer Badge Component */
+function TimerBadge({ timeRemaining }: { timeRemaining: number }) {
+  const minutes = Math.floor(timeRemaining / 60);
+  const seconds = timeRemaining % 60;
+  
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full">
+      <Timer className="w-3.5 h-3.5 text-slate-600" />
+      <span className="text-xs font-mono font-medium text-slate-700">
+        {minutes}:{seconds.toString().padStart(2, "0")}
+      </span>
+    </div>
+  );
+}
+
+/** Desktop Viewer Component */
+function DesktopViewer({
+  vncUrl,
+  isLoading,
+  sandboxId,
+  isControlOverride,
+  setIsControlOverride,
+  iframeRef,
+  iFrameWrapperRef,
+  timeRemaining,
+}: {
+  vncUrl: string | null;
+  isLoading: boolean;
+  sandboxId: string | null;
+  isControlOverride: boolean;
+  setIsControlOverride: (value: boolean) => void;
+  iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  iFrameWrapperRef: React.RefObject<HTMLDivElement | null>;
+  timeRemaining: number;
+}) {
+  const showLoading = isLoading;
+  const showDesktop = sandboxId && vncUrl;
+  const showStandby = !showLoading && !showDesktop;
+
+  return (
+    <div className="flex-1 flex flex-col min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* Desktop Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <div className={cn(
+              "w-2.5 h-2.5 rounded-full transition-colors",
+              showDesktop ? "bg-emerald-500 animate-pulse" : "bg-slate-300"
+            )} />
+            <span className="text-xs font-medium text-slate-600">
+              {showDesktop ? "Live" : "Offline"}
+            </span>
+          </div>
+          <div className="h-4 w-px bg-slate-200" />
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <Monitor className="w-3.5 h-3.5" />
+            <span className="text-xs font-medium">Desktop View</span>
+          </div>
+        </div>
+        
+        {sandboxId && <TimerBadge timeRemaining={timeRemaining} />}
+      </div>
+
+      {/* Desktop Content */}
+      <div ref={iFrameWrapperRef} className="flex-1 relative bg-slate-100">
+        {showLoading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl">
+                  <Loader variant="square" className="text-white w-8 h-8" />
+                </div>
+                <div className="absolute -inset-2 bg-blue-500/20 rounded-3xl blur-xl animate-pulse" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium text-slate-900">Starting Desktop</p>
+                <p className="text-xs text-slate-500 mt-1">This may take a few seconds...</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDesktop && (
+          <>
+            <iframe
+              ref={iframeRef}
+              src={vncUrl}
+              className={cn(
+                "w-full h-full border-0",
+                !isControlOverride && "pointer-events-none"
+              )}
+              allow="clipboard-read; clipboard-write"
+            />
+            
+            {/* Agent Control Badge */}
+            <div className="absolute bottom-4 right-4 z-10">
+              {!isControlOverride ? (
+                <Button
+                  onClick={() => setIsControlOverride(true)}
+                  className="bg-white/95 backdrop-blur-sm text-slate-700 border border-slate-200 shadow-lg hover:bg-white hover:shadow-xl transition-all"
+                  size="sm"
+                >
+                  <Bot className="w-4 h-4 mr-2 text-blue-600 animate-pulse" />
+                  Agent Active
+                  <MousePointer2 className="w-3 h-3 ml-2 text-slate-400" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => setIsControlOverride(false)}
+                  className="bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-all"
+                  size="sm"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Resume Agent
+                </Button>
+              )}
+            </div>
+          </>
+        )}
+
+        {showStandby && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+            <div className="flex flex-col items-center gap-6 max-w-md text-center px-6">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
+                  <Power className="w-10 h-10 text-slate-400" />
+                </div>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 mb-2">
+                  Ready to Start
+                </h2>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  Send a message to wake the agent and start automating your desktop tasks.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Chat Panel Component */
+function ChatPanel({
+  messages,
+  input,
+  setInput,
+  onSubmit,
+  isLoading,
+  onStop,
+  onExampleClick,
+  sandboxId,
+  onStopSandbox,
+}: {
+  messages: any[];
+  input: string;
+  setInput: (value: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  isLoading: boolean;
+  onStop: () => void;
+  onExampleClick: (prompt: string) => void;
+  sandboxId: string | null;
+  onStopSandbox: () => void;
+}) {
+  return (
+    <div className="w-full lg:w-[420px] flex flex-col min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* Chat Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-4 h-4 text-slate-600" />
+          <span className="text-sm font-semibold text-slate-900">Chat</span>
+        </div>
+        {sandboxId && (
+          <Button 
+            onClick={onStopSandbox} 
+            variant="error" 
+            size="sm"
+            className="h-7 text-xs"
+          >
+            <Square className="w-3 h-3 mr-1.5" />
+            Stop
+          </Button>
+        )}
+      </div>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto relative">
+        {messages.length > 0 ? (
+          <ChatList messages={messages} className="p-4" />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <ExamplePrompts 
+              onPromptClick={onExampleClick} 
+              className="w-full"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Input Area */}
+      <div className="p-4 border-t border-slate-100 bg-slate-50/30">
+        <ChatInput
+          input={input}
+          setInput={setInput}
+          onSubmit={onSubmit}
+          isLoading={isLoading}
+          onStop={onStop}
+          placeholder="Ask the agent to do something..."
+          className="w-full"
+        />
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// MAIN PAGE
+// ============================================================================
 
 export default function Home() {
+  // State
   const [sandboxId, setSandboxId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [vncUrl, setVncUrl] = useState<string | null>(null);
-  const { theme, setTheme } = useTheme();
-  const [timeRemaining, setTimeRemaining] = useState<number>(
-    SANDBOX_TIMEOUT_MS / 1000
-  );
+  const [timeRemaining, setTimeRemaining] = useState<number>(SANDBOX_TIMEOUT_MS / 1000);
   const [isTabVisible, setIsTabVisible] = useState<boolean>(true);
+  const [isControlOverride, setIsControlOverride] = useState(false);
+  
+  // Refs
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iFrameWrapperRef = useRef<HTMLDivElement>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isControlOverride, setIsControlOverride] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
+  // Chat Hook
   const {
     messages,
     isLoading: chatLoading,
@@ -62,126 +304,76 @@ export default function Home() {
     onSandboxCreated,
   } = useChat();
 
+  // Visibility tracking
   useEffect(() => {
     const handleVisibilityChange = () => {
       setIsTabVisible(document.visibilityState === "visible");
     };
-
     setIsTabVisible(document.visibilityState === "visible");
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
-  const stopSandbox = async () => {
-    if (sandboxId) {
-      try {
-        stopGeneration();
-        const success = await stopSandboxAction(sandboxId);
-        if (success) {
-          setSandboxId(null);
-          setVncUrl(null);
-          clearMessages();
-          setTimeRemaining(SANDBOX_TIMEOUT_MS / 1000);
-          toast("Sandbox instance stopped");
-        } else {
-          toast.error("Failed to stop sandbox instance");
-        }
-      } catch (error) {
-        console.error("Failed to stop sandbox:", error);
-        toast.error("Failed to stop sandbox");
-      }
-    }
-  };
-
-  const handleIncreaseTimeout = async () => {
+  // Sandbox handlers
+  const stopSandbox = useCallback(async () => {
     if (!sandboxId) return;
+    try {
+      stopGeneration();
+      const success = await stopSandboxAction(sandboxId);
+      if (success) {
+        setSandboxId(null);
+        setVncUrl(null);
+        clearMessages();
+        setTimeRemaining(SANDBOX_TIMEOUT_MS / 1000);
+        toast.success("Session ended");
+      } else {
+        toast.error("Failed to stop session");
+      }
+    } catch (error) {
+      console.error("Failed to stop sandbox:", error);
+      toast.error("Failed to stop session");
+    }
+  }, [sandboxId, stopGeneration, clearMessages]);
 
+  const handleIncreaseTimeout = useCallback(async () => {
+    if (!sandboxId) return;
     try {
       await increaseTimeout(sandboxId);
       setTimeRemaining(SANDBOX_TIMEOUT_MS / 1000);
-      toast.success("Instance time increased");
     } catch (error) {
       console.error("Failed to increase time:", error);
-      toast.error("Failed to increase time");
     }
-  };
+  }, [sandboxId]);
 
-  const onSubmit = (e: React.FormEvent) => {
+  // Message handlers
+  const getResolution = useCallback((): [number, number] => {
+    const width = iFrameWrapperRef.current?.clientWidth || (window.innerWidth < 768 ? window.innerWidth - 32 : 1024);
+    const height = iFrameWrapperRef.current?.clientHeight || (window.innerWidth < 768 ? Math.min(window.innerHeight * 0.4, 400) : 768);
+    return [width, height];
+  }, []);
+
+  const onSubmit = useCallback((e: React.FormEvent) => {
     const content = handleSubmit(e);
     if (content) {
-      const width =
-        iFrameWrapperRef.current?.clientWidth ||
-        (window.innerWidth < 768 ? window.innerWidth - 32 : 1024);
-      const height =
-        iFrameWrapperRef.current?.clientHeight ||
-        (window.innerWidth < 768
-          ? Math.min(window.innerHeight * 0.4, 400)
-          : 768);
-
       sendMessage({
         content,
         sandboxId: sandboxId || undefined,
         environment: "linux",
-        resolution: [width, height],
+        resolution: getResolution(),
       });
     }
-  };
+  }, [handleSubmit, sendMessage, sandboxId, getResolution]);
 
-  const handleExampleClick = (prompt: string) => {
-    const width =
-      iFrameWrapperRef.current?.clientWidth ||
-      (window.innerWidth < 768 ? window.innerWidth - 32 : 1024);
-    const height =
-      iFrameWrapperRef.current?.clientHeight ||
-      (window.innerWidth < 768 ? Math.min(window.innerHeight * 0.4, 400) : 768);
-
+  const handleExampleClick = useCallback((prompt: string) => {
     sendMessage({
       content: prompt,
       sandboxId: sandboxId || undefined,
       environment: "linux",
-      resolution: [width, height],
+      resolution: getResolution(),
     });
-  };
+  }, [sendMessage, sandboxId, getResolution]);
 
-  const handleSandboxCreated = (newSandboxId: string, newVncUrl: string) => {
-    setSandboxId(newSandboxId);
-    setVncUrl(newVncUrl);
-    setTimeRemaining(SANDBOX_TIMEOUT_MS / 1000);
-    toast.success("Sandbox instance created");
-  };
-
-  const handleClearChat = () => {
-    clearMessages();
-    toast.success("Chat cleared");
-  };
-
-  const ThemeToggle = () => {
-    if (!mounted) {
-      return (
-        <Button variant="outline" size="icon" className="opacity-50">
-          <Sun className="h-5 w-5" />
-        </Button>
-      );
-    }
-    return (
-      <Button
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        variant="outline"
-        size="icon"
-      >
-        {theme === "dark" ? (
-          <Sun className="h-5 w-5" />
-        ) : (
-          <MoonIcon className="h-5 w-5" />
-        )}
-      </Button>
-    );
-  };
-
+  // Timer effects
   useEffect(() => {
     if (!sandboxId) return;
     const interval = setInterval(() => {
@@ -194,200 +386,58 @@ export default function Home() {
 
   useEffect(() => {
     if (!sandboxId) return;
-
     if (timeRemaining === 10 && isTabVisible) {
       handleIncreaseTimeout();
     }
-
     if (timeRemaining === 0) {
       setSandboxId(null);
       setVncUrl(null);
       clearMessages();
       stopGeneration();
-      toast.error("Instance time expired");
+      toast.error("Session expired");
       setTimeRemaining(SANDBOX_TIMEOUT_MS / 1000);
     }
-  }, [timeRemaining, sandboxId, stopGeneration, clearMessages, isTabVisible]);
+  }, [timeRemaining, sandboxId, stopGeneration, clearMessages, isTabVisible, handleIncreaseTimeout]);
 
+  // Sandbox creation callback
   useEffect(() => {
     onSandboxCreated((newSandboxId: string, newVncUrl: string) => {
-      handleSandboxCreated(newSandboxId, newVncUrl);
+      setSandboxId(newSandboxId);
+      setVncUrl(newVncUrl);
+      setTimeRemaining(SANDBOX_TIMEOUT_MS / 1000);
+      toast.success("Desktop ready");
     });
   }, [onSandboxCreated]);
 
   return (
-    <div className="h-screen bg-background text-foreground p-4 md:p-6 overflow-hidden flex flex-col gap-4 font-sans selection:bg-primary/30">
-      {/* Top Bar: Command Deck */}
-      <header className="flex items-center justify-between glass-panel p-4 rounded-2xl z-20 shrink-0">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="group flex items-center gap-3">
-            <Logo width={32} height={32} className="transition-transform group-hover:scale-110 group-hover:rotate-12" />
-            <div className="flex flex-col">
-              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
-                OpenCompX
-              </h1>
-              <span className="text-[10px] uppercase tracking-widest text-primary/70 font-mono">
-                Autonomous Desktop Agent
-              </span>
-            </div>
-          </Link>
-        </div>
+    <div className="h-screen flex flex-col bg-slate-50">
+      <Header />
+      
+      <main className="flex-1 flex flex-col lg:flex-row gap-4 p-4 lg:p-6 min-h-0">
+        {/* Desktop Viewer */}
+        <DesktopViewer
+          vncUrl={vncUrl}
+          isLoading={isLoading || (chatLoading && !sandboxId)}
+          sandboxId={sandboxId}
+          isControlOverride={isControlOverride}
+          setIsControlOverride={setIsControlOverride}
+          iframeRef={iframeRef}
+          iFrameWrapperRef={iFrameWrapperRef}
+          timeRemaining={timeRemaining}
+        />
 
-        <div className="flex items-center gap-3">
-          <RepoBanner />
-          <ThemeToggle />
-          {/* Mobile Menu Toggle */}
-          <div className="md:hidden">
-            <Button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} variant="ghost" size="icon">
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Holo-Deck (Bento Grid) */}
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 min-h-0">
-
-        {/* Agent Vision (VNC) - Spans 8 cols */}
-        <section className="col-span-1 lg:col-span-8 flex flex-col gap-4 min-h-0 transition-all duration-300">
-          <div className="glass-panel w-full flex-1 rounded-2xl relative overflow-hidden flex flex-col border-primary/20 shadow-[0_0_30px_rgba(0,212,255,0.05)]">
-            {/* Header */}
-            <div className="absolute top-0 left-0 right-0 h-10 bg-black/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-4 z-10">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-xs font-mono text-primary/80 tracking-wider">LIVE_FEED // VNC_SECURE</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {sandboxId && (
-                  <div className="flex items-center gap-2 px-2 py-1 bg-primary/10 rounded border border-primary/20">
-                    <Timer className="w-3 h-3 text-primary" />
-                    <span className="text-xs font-mono text-primary">
-                      {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, "0")}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Viewport */}
-            <div ref={iFrameWrapperRef} className="flex-1 w-full h-full relative group bg-black/40">
-
-              {/* VNC Content */}
-              {isLoading || (chatLoading && !sandboxId) ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <Loader variant="square" className="text-primary w-12 h-12" />
-                  <div className="mt-4 font-mono text-primary animate-pulse">
-                    INITIALIZING_NEURAL_LINK...
-                  </div>
-                </div>
-              ) : sandboxId && vncUrl ? (
-                <>
-                  <iframe
-                    ref={iframeRef}
-                    src={vncUrl}
-                    className={cn(
-                      "w-full h-full object-cover transition-all duration-500",
-                      !isControlOverride && "pointer-events-none group-hover:blur-sm group-hover:opacity-50"
-                    )}
-                    allow="clipboard-read; clipboard-write"
-                  />
-
-                  {/* Agent Lock Overlay - Shows on Hover if not overridden */}
-                  {!isControlOverride && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto z-10">
-                      <div className="bg-background/80 backdrop-blur-xl border border-primary/20 p-6 rounded-2xl flex flex-col items-center gap-4 shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
-                          <Bot className="w-6 h-6 text-primary" />
-                        </div>
-                        <div className="text-center">
-                          <h3 className="text-lg font-bold text-foreground">Agent Active</h3>
-                          <p className="text-xs text-muted-foreground font-mono mt-1">
-                            SYSTEM_LOCKED // AUTONOMOUS_MODE
-                          </p>
-                        </div>
-                        <Button
-                          onClick={() => setIsControlOverride(true)}
-                          variant="outline"
-                          className="border-primary/30 hover:bg-primary/10 text-primary"
-                        >
-                          <MousePointer2 className="w-4 h-4 mr-2" />
-                          Take Control
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Resume Agent Button - Shows if overridden */}
-                  {isControlOverride && (
-                    <div className="absolute top-4 right-4 z-20">
-                      <Button
-                        onClick={() => setIsControlOverride(false)}
-                        variant="default"
-                        size="sm"
-                        className="shadow-xl animate-in fade-in zoom-in duration-300"
-                      >
-                        <Bot className="w-4 h-4 mr-2" />
-                        Resume Agent
-                      </Button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[url('/grid-pattern.svg')] bg-center opacity-80 decoration-slice">
-                  <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4 animate-pulse-slow ring-1 ring-primary/30">
-                    <Power className="w-10 h-10 text-primary" />
-                  </div>
-                  <h2 className="text-2xl font-light text-foreground mb-2">System Standby</h2>
-                  <p className="text-muted-foreground max-w-sm text-center">
-                    Initiate a task via the command terminal to wake the agent.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Command Terminal (Chat) - Spans 4 cols */}
-        <section className="col-span-1 lg:col-span-4 h-full flex flex-col min-h-0 transition-all duration-300">
-          <div className="glass-panel w-full flex-1 rounded-2xl flex flex-col overflow-hidden border-accent/20 relative">
-
-            {/* Terminal Header */}
-            <div className="h-12 border-b border-border/10 bg-white/5 flex items-center px-4 justify-between shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-accent uppercase tracking-widest">Command Terminal</span>
-              </div>
-              {sandboxId && (
-                <Button onClick={stopSandbox} variant="error" size="sm" className="h-7 text-[10px] uppercase tracking-wide">
-                  <Power className="w-3 h-3 mr-1" /> Terminate
-                </Button>
-              )}
-            </div>
-
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto relative scrollbar-thin scrollbar-track-transparent">
-              <ChatList messages={messages} className="p-4" />
-              {messages.length === 0 && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6">
-                  <ExamplePrompts onPromptClick={handleExampleClick} className="w-full pointer-events-auto" />
-                </div>
-              )}
-            </div>
-
-            {/* Input Area */}
-            <div className="p-4 bg-black/10 border-t border-border/10 shrink-0">
-              <ChatInput
-                input={input}
-                setInput={setInput}
-                onSubmit={onSubmit}
-                isLoading={chatLoading}
-                onStop={stopGeneration}
-                className="w-full"
-              />
-            </div>
-
-          </div>
-        </section>
-
+        {/* Chat Panel */}
+        <ChatPanel
+          messages={messages}
+          input={input}
+          setInput={setInput}
+          onSubmit={onSubmit}
+          isLoading={chatLoading}
+          onStop={stopGeneration}
+          onExampleClick={handleExampleClick}
+          sandboxId={sandboxId}
+          onStopSandbox={stopSandbox}
+        />
       </main>
     </div>
   );

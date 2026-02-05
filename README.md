@@ -49,15 +49,14 @@ docker-compose up --build -d
 ### 3. Vision Service (Required)
 You must run the UI-TARS model locally or on a GPU server.
 ```bash
-# Example vLLM command (Requires GPU - Optimized for 24GB VRAM)
-# Example vLLM command (Optimized for Speed & Memory)
+# Run with optimized settings for 24GB GPU
 vllm serve ByteDance-Seed/UI-TARS-1.5-7B \
   --port 8080 \
   --trust-remote-code \
-  --max-model-len 32768 \
-  --gpu-memory-utilization 0.95 \
-  --max-num-seqs 128 \
-  --enable-prefix-caching
+  --max-model-len 24576 \
+  --gpu-memory-utilization 0.90 \
+  --max-num-seqs 4 \
+  --disable-log-stats
 ```
 
 ## 🛠 Manual Installation

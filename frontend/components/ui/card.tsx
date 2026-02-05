@@ -2,12 +2,12 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
 
-export const cardVariants = cva("rounded-sm", {
+export const cardVariants = cva("rounded-xl", {
   variants: {
     variant: {
-      default: "bg-bg text-fg",
-      layer: "bg-bg-200/60 backdrop-blur-lg border border-border",
-      slate: "",
+      default: "bg-white text-slate-900 border border-slate-200 shadow-sm",
+      layer: "bg-white/80 backdrop-blur-lg border border-slate-200",
+      slate: "bg-white border border-slate-200",
     },
   },
   defaultVariants: {

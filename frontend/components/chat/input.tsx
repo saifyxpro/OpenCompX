@@ -1,22 +1,9 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { OpenAiLogo } from "@phosphor-icons/react";
-import { ChevronsRight, StopCircle } from "lucide-react";
+import { Send, StopCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-} from "../ui/select";
-import { useChat } from "@/lib/chat-context";
-import { Input } from "../ui/input";
-import { AnthropicLogo } from "../icons";
-import { motion } from "motion/react";
 
 interface ChatInputProps {
   input: string;
@@ -30,7 +17,7 @@ interface ChatInputProps {
 }
 
 /**
- * Chat input component with submit and stop buttons
+ * Modern chat input component
  */
 export function ChatInput({
   input,
@@ -39,81 +26,59 @@ export function ChatInput({
   isLoading,
   onStop,
   disabled = false,
-  placeholder = "What are we surfing today?",
+  placeholder = "Ask the agent to do something...",
   className,
 }: ChatInputProps) {
-  const { model, setModel } = useChat();
-
   const isInputEmpty = useMemo(() => input.trim() === "", [input]);
 
   return (
     <form onSubmit={onSubmit} className={cn(className)}>
-      <div className="flex items-center">
-        <div className="relative flex-1 flex items-center gap-2">
-          {/* CURRENTLY NOT USED */}
-          {/*  <Select value={model} onValueChange={setModel} disabled={disabled}>
-            <SelectTrigger
-              className="absolute rounded-lg left-1.5 z-10 inset-y-1.5 border-border-200 w-min aspect-square h-auto flex items-center justify-center hover:bg-bg focus:bg-bg"
-              withIcon={false}
+      <div className="relative">
+        <input
+          type="text"
+          placeholder={placeholder}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          autoFocus
+          disabled={disabled}
+          className={cn(
+            "w-full h-12 px-4 pr-14",
+            "bg-white border border-slate-200 rounded-xl",
+            "text-sm text-slate-900 placeholder:text-slate-400",
+            "focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500",
+            "transition-all duration-200",
+            "disabled:opacity-50 disabled:cursor-not-allowed"
+          )}
+        />
+        
+        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+          {isLoading ? (
+            <Button
+              type="button"
+              onClick={onStop}
+              size="icon"
+              className="h-8 w-8 bg-red-500 hover:bg-red-600 text-white rounded-lg"
+              disabled={disabled}
+              title="Stop generating"
             >
-              {model == "openai" ? (
-                <OpenAiLogo className="size-5" />
-              ) : (
-                <AnthropicLogo className="size-5" />
+              <StopCircle className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              size="icon"
+              className={cn(
+                "h-8 w-8 rounded-lg transition-all",
+                isInputEmpty 
+                  ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
+                  : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
               )}
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Model</SelectLabel>
-                <SelectItem value="openai">OpenAI</SelectItem>
-                <SelectItem value="anthropic">Anthropic</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select> */}
-          <Input
-            placeholder={placeholder}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            autoFocus
-            required
-            disabled={disabled}
-            className="w-full pr-16"
-          />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            {isLoading ? (
-              <Button
-                type="button"
-                onClick={onStop}
-                variant="error"
-                size="iconLg"
-                disabled={disabled}
-                title="Stop generating"
-              >
-                <StopCircle className="w-5 h-5" />
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                variant="accent"
-                size="iconLg"
-                disabled={disabled || isInputEmpty}
-                title="Send message"
-              >
-                <motion.span
-                  animate={{
-                    rotate: isInputEmpty ? 0 : -90,
-                  }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 500,
-                    damping: 20,
-                  }}
-                >
-                  <ChevronsRight className="w-5 h-5" />
-                </motion.span>
-              </Button>
-            )}
-          </div>
+              disabled={disabled || isInputEmpty}
+              title="Send message"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </div>
     </form>

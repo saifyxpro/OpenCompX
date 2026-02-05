@@ -18,7 +18,7 @@ export function RepoBanner() {
         "bg-fg overflow-hidden hover:scale-[1.01] hover:bg-fg/80 font-light px-3 py-1.5",
         "gap-2 w-fit flex items-center shadow-sm ml-auto border",
         "transition-all duration-300 group relative",
-        "before:absolute before:w-full before:h-full before:bg-[radial-gradient(circle_at_50%_-50%,rgba(0,0,0,0.1),transparent_70%)] dark:before:bg-[radial-gradient(circle_at_50%_-100%,rgba(0,0,0,0.1),transparent_70%)] before:pointer-events-none"
+        "before:absolute before:w-full before:h-full before:bg-[radial-gradient(circle_at_50%_-50%,rgba(0,0,0,0.1),transparent_70%)] before:pointer-events-none"
       )}
     >
       <GitHubIcon className="w-4 h-4 text-bg" aria-hidden="true" />
