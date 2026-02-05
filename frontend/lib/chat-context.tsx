@@ -56,7 +56,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const onSandboxCreatedRef = useRef<
     ((sandboxId: string, vncUrl: string) => void) | undefined
   >(undefined);
-  > (undefined);
   const [model, setModel] = useState<ComputerModel>("openai");
   const [startTime, setStartTime] = useState<number | null>(null);
 
