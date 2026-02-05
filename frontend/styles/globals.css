@@ -149,6 +149,22 @@
   border-radius: 2px;
 }
 
+/* Prose code blocks overflow fix */
+.prose pre {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.prose code {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.prose p {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
 /* Focus styles */
 :focus-visible {
   outline: 2px solid var(--primary);

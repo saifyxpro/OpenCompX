@@ -2,7 +2,6 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import {
-  Timer,
   Power,
   Bot,
   MousePointer2,
@@ -57,21 +56,6 @@ function Header() {
   );
 }
 
-/** Timer Badge Component */
-function TimerBadge({ timeRemaining }: { timeRemaining: number }) {
-  const minutes = Math.floor(timeRemaining / 60);
-  const seconds = timeRemaining % 60;
-  
-  return (
-    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full">
-      <Timer className="w-3.5 h-3.5 text-slate-600" />
-      <span className="text-xs font-mono font-medium text-slate-700">
-        {minutes}:{seconds.toString().padStart(2, "0")}
-      </span>
-    </div>
-  );
-}
-
 /** Desktop Viewer Component */
 function DesktopViewer({
   vncUrl,
@@ -81,7 +65,6 @@ function DesktopViewer({
   setIsControlOverride,
   iframeRef,
   iFrameWrapperRef,
-  timeRemaining,
 }: {
   vncUrl: string | null;
   isLoading: boolean;
@@ -90,7 +73,6 @@ function DesktopViewer({
   setIsControlOverride: (value: boolean) => void;
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
   iFrameWrapperRef: React.RefObject<HTMLDivElement | null>;
-  timeRemaining: number;
 }) {
   const showLoading = isLoading;
   const showDesktop = sandboxId && vncUrl;
@@ -116,8 +98,6 @@ function DesktopViewer({
             <span className="text-xs font-medium">Desktop View</span>
           </div>
         </div>
-        
-        {sandboxId && <TimerBadge timeRemaining={timeRemaining} />}
       </div>
 
       {/* Desktop Content */}
@@ -150,6 +130,11 @@ function DesktopViewer({
               )}
               allow="clipboard-read; clipboard-write"
             />
+            
+            {/* Agent Working Indicator - Bottom Glow */}
+            {!isControlOverride && (
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-blue-500/20 via-blue-400/10 to-transparent pointer-events-none animate-pulse" />
+            )}
             
             {/* Agent Control Badge */}
             <div className="absolute bottom-4 right-4 z-10">
@@ -423,7 +408,6 @@ export default function Home() {
           setIsControlOverride={setIsControlOverride}
           iframeRef={iframeRef}
           iFrameWrapperRef={iFrameWrapperRef}
-          timeRemaining={timeRemaining}
         />
 
         {/* Chat Panel */}

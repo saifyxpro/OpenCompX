@@ -48,10 +48,39 @@ const parseAction = (code: string) => {
       icon: AppWindow
     };
   }
+  if (code.includes("open_url") || code.includes("open(")) {
+    const match = code.match(/open(?:_url)?\(['"](.+?)['"]\)/);
+    return {
+      title: match ? `Opening ${new URL(match[1]).hostname}` : "Opening URL...",
+      icon: AppWindow
+    };
+  }
   if (code.includes("scroll")) return { title: "Scrolling...", icon: MousePointer2 };
   if (code.includes("wait")) return { title: "Waiting...", icon: Clock };
+  if (code.includes("hotkey")) return { title: "Keyboard shortcut", icon: Keyboard };
+  if (code.includes("drag")) return { title: "Dragging element", icon: MousePointer2 };
 
   return { title: "Running command", icon: Terminal };
+};
+
+// Helper to check if content is raw code that should be hidden
+const isRawCode = (content: string): boolean => {
+  if (!content) return false;
+  const codePatterns = [
+    /^pyautogui\./,
+    /^import\s+/,
+    /^\s*#/,
+    /\.open\(/,
+    /\.click\(/,
+    /\.write\(/,
+    /\.launch\(/,
+    /\.hotkey\(/,
+    /\.scroll\(/,
+    /\.moveTo\(/,
+    /\.dragRel\(/,
+    /```python/,
+  ];
+  return codePatterns.some(pattern => pattern.test(content.trim()));
 };
 
 interface ActionMessageProps {
@@ -202,9 +231,9 @@ export function ChatMessage({ message, className }: ChatMessageProps) {
   if (isUser) {
     return (
       <div className={cn("flex justify-end", className)}>
-        <div className="flex items-start gap-2 max-w-[85%]">
-          <div className="bg-blue-600 text-white px-4 py-2.5 rounded-2xl rounded-br-md shadow-sm">
-            <p className="text-sm">{message.content}</p>
+        <div className="flex items-start gap-2 max-w-full">
+          <div className="bg-blue-600 text-white px-4 py-2.5 rounded-2xl rounded-br-md shadow-sm min-w-0 max-w-[calc(100%-3rem)]">
+            <p className="text-sm break-words">{message.content}</p>
           </div>
           <div className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
             <User className="w-4 h-4 text-blue-600" />
@@ -214,16 +243,21 @@ export function ChatMessage({ message, className }: ChatMessageProps) {
     );
   }
 
-  // Assistant messages
+  // Assistant messages - filter out raw code
   if (isAssistant) {
+    // Skip rendering if content is raw pyautogui code
+    if (isRawCode(message.content)) {
+      return null;
+    }
+    
     return (
       <div className={cn("flex justify-start", className)}>
-        <div className="flex items-start gap-2 max-w-[85%]">
+        <div className="flex items-start gap-2 max-w-full">
           <div className="flex-shrink-0 w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center">
             <Bot className="w-4 h-4 text-slate-600" />
           </div>
-          <div className="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl rounded-bl-md shadow-sm">
-            <div className="text-sm text-slate-700 prose prose-sm prose-slate max-w-none">
+          <div className="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl rounded-bl-md shadow-sm min-w-0 max-w-[calc(100%-3rem)]">
+            <div className="text-sm text-slate-700 prose prose-sm prose-slate max-w-none overflow-hidden break-words">
               <MemoizedReactMarkdown>{message.content}</MemoizedReactMarkdown>
             </div>
           </div>
