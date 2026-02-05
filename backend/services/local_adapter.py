@@ -112,6 +112,10 @@ class LocalDockerAdapter:
         self._exec(f"xdotool mousemove {int(x)} {int(y)}")
         self._exec("xdotool mouseup 1")
     
+    def dragTo(self, x, y, duration=0.0, **kwargs):
+        """Alias for drag (pyautogui compatibility)."""
+        self.drag(x, y, duration, **kwargs)
+    
     def scroll(self, clicks, x=None, y=None, **kwargs):
         """Vertical scroll (positive=up, negative=down)."""
         direction = 4 if clicks > 0 else 5  # 4=up, 5=down in X11
@@ -276,7 +280,11 @@ def start_container():
             ["docker", "compose", "-f", "docker-compose.desktop.yml", "up", "-d", "--build"],
             check=True, timeout=300
         )
-        time.sleep(10)  # Wait for VNC to start
+        
+        # Smart wait for VNC instead of sleep
+        # We need an instance to check, but this is a standalone function.
+        # We'll just sleep briefly to let docker register, then let usage sites check.
+        time.sleep(2) 
         return True
     except Exception as e:
         logger.error(f"Failed to start container: {e}")
@@ -301,9 +309,28 @@ def start_container():
         safe_text = text.replace("'", "'\\''")
         self._exec(f"echo -n '{safe_text}' | xclip -selection clipboard")
 
-    def get_clipboard(self) -> str:
-        """Get clipboard content."""
         return self._exec("xclip -selection clipboard -o", timeout=5).stdout
+
+    def wait_for_vnc(self, timeout: int = 15) -> bool:
+        """Poll container to check if VNC port (6080) is listening."""
+        logger.info(f"Waiting for VNC to be ready (timeout={timeout}s)...")
+        start = time.time()
+        while time.time() - start < timeout:
+            try:
+                # Check if websockify (noVNC) is running/listening
+                # We use netstat or looking for the process. 
+                # Simplest: check if port 6080 is open in the container.
+                # Since we might not have netstat, we can check process list.
+                # Or try to connect to localhost:6080 INSIDE container? No, we are outside.
+                
+                # Check for websockify process
+                res = self._exec("pgrep -f websockify", timeout=2)
+                if res.returncode == 0:
+                    return True
+            except:
+                pass
+            time.sleep(0.5)
+        return False
 
 def get_novnc_url(port: int = 6080) -> str:
     """Get the noVNC URL for the local container."""

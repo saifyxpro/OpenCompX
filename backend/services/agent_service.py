@@ -60,12 +60,13 @@ class AgentService:
             
             self.container_running = True
             
-            # Wait for VNC to be ready
-            print("Waiting for VNC to initialize...")
-            time.sleep(5)
-            
-            # Create adapter
+            # Create adapter first
             self.adapter = LocalDockerAdapter()
+            
+            # Wait for VNC to be ready (Polling)
+            print("Waiting for VNC availability...")
+            if not self.adapter.wait_for_vnc(timeout=20):
+                 print("WARNING: VNC polling timed out. Desktop might not be viewable.")
             
             # Get VNC URL
             self.vnc_url = get_novnc_url()
