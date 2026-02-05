@@ -33,6 +33,15 @@
 -   **Google API Key** (for Gemini 2.0 Flash) OR **OpenAI API Key**
 -   **Local vLLM** (for UI-TARS Vision)
 
+### System Requirements
+
+| component | Local Vision (Recommended)                                           | Cloud / API Vision                                 |
+| :-------- | :------------------------------------------------------------------- | :------------------------------------------------- |
+| **GPU**   | NVIDIA GPU with **24GB+ VRAM** (e.g., RTX 3090/4090) for UI-TARS 7B. | None required (Vision processed by API).           |
+| **RAM**   | 32GB+ System RAM recommended.                                        | 16GB+ System RAM (4GB allocated to Agent Desktop). |
+| **Disk**  | 50GB+ (Docker images + Model weights).                               | 10GB+ (Docker images only).                        |
+| **OS**    | Linux / Windows (WSL2) recommended.                                  | Linux / Windows / macOS.                           |
+
 ### 1. Configuration
 
 Create `.env` file in `backend/`:

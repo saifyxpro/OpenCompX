@@ -158,7 +158,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
           };
         });
 
-      const response = await fetch("/api/chat", {
+      // Use direct proxy stream to avoid Next.js Edge/Serverless timeouts
+      const response = await fetch("/api/chat_stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

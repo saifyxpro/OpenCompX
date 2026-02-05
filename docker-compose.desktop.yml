@@ -15,4 +15,4 @@ services:
     volumes:
       - ./screenshots:/home/agent/screenshots
     restart: unless-stopped
-    shm_size: '2gb'  # Prevent browser crashes
+    shm_size: '4gb'  # Prevent browser crashes, increased for stability
