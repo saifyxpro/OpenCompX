@@ -295,7 +295,7 @@ class AgentService:
         # Wait 2 seconds before first screenshot (only if step 0)
         if step_num == 0:
             print("Waiting 2 seconds for screen to settle...")
-            time.sleep(2)
+            time.sleep(1)
         
         # Capture screenshot
         screenshot_bytes = self._take_screenshot()
@@ -408,7 +408,7 @@ class AgentService:
                     print(f"  ERROR: Action failed: {e}")
                     logs.append(f"Action error: {str(e)[:100]}")
                 
-                time.sleep(1.5)
+                time.sleep(0.5)
             
             return {
                 "status": "continue",

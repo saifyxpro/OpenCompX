@@ -223,7 +223,7 @@ class LocalDockerAdapter:
         
         actual_app = app_map.get(app.lower(), app)
         self._exec(f"nohup {actual_app} > /tmp/launch.log 2>&1 &")
-        time.sleep(2)  # Wait for app to start
+        time.sleep(1)  # Faster launch wait
     
     def open_url(self, url):
         """Open URL in browser."""
@@ -232,7 +232,7 @@ class LocalDockerAdapter:
             url = f"https://{url}"
         
         self._exec(f"nohup firefox '{url}' > /tmp/browser.log 2>&1 &")
-        time.sleep(3)  # Wait for browser to open
+        time.sleep(1.5)  # Faster browser wait
     
     # --- Utils ---
     def position(self):
