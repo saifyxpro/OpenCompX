@@ -245,6 +245,11 @@ class LangGraphAgentService:
 
     def run(self, instruction: str, user_image: str | None = None):
         """Run the graph for the given instruction."""
+        # Clean state for new run if agent supports it
+        if hasattr(self.agent, "reset"):
+            logger.info("Resetting inner agent state for new run.")
+            self.agent.reset()
+
         initial_state = {
             "messages": [],
             "instruction": instruction,
