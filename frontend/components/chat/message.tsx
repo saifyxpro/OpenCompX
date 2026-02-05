@@ -110,45 +110,32 @@ function ActionMessage({ message, className }: ActionMessageProps) {
   const isFailed = status === "failed";
 
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full pl-11 pr-4", className)}>
       <div className={cn(
-        "bg-white border rounded-xl overflow-hidden transition-all",
-        isPending && "border-amber-200 bg-amber-50/30",
-        isCompleted && "border-emerald-200 bg-emerald-50/30",
-        isFailed && "border-red-200 bg-red-50/30",
-        !isPending && !isCompleted && !isFailed && "border-slate-200 hover:border-slate-300"
+        "rounded-lg overflow-hidden transition-all border",
+        isPending && "border-amber-200/50 bg-amber-50/50",
+        isCompleted && "border-emerald-200/50 bg-emerald-50/50",
+        isFailed && "border-red-200/50 bg-red-50/50",
+        !isPending && !isCompleted && !isFailed && "border-slate-200/60 bg-slate-50/50 hover:bg-slate-100/80"
       )}>
         {/* Action Header */}
-        <div className="flex items-center justify-between px-3 py-2.5">
+        <div className="flex items-center justify-between px-3 py-2">
           <div className="flex items-center gap-3">
             <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center",
+              "w-6 h-6 rounded flex items-center justify-center shadow-sm",
               isPending && "bg-amber-100 text-amber-600",
               isCompleted && "bg-emerald-100 text-emerald-600",
               isFailed && "bg-red-100 text-red-600",
-              !isPending && !isCompleted && !isFailed && "bg-slate-100 text-slate-600"
+              !isPending && !isCompleted && !isFailed && "bg-white border border-slate-200 text-slate-500"
             )}>
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
             </div>
 
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-slate-900">{title}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-700 font-mono">{title}</span>
               {isPending && (
-                <span className="text-xs text-amber-600 flex items-center gap-1">
-                  <Clock className="w-3 h-3 animate-spin" />
-                  Processing...
-                </span>
-              )}
-              {isCompleted && (
-                <span className="text-xs text-emerald-600 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Completed
-                </span>
-              )}
-              {isFailed && (
-                <span className="text-xs text-red-600 flex items-center gap-1">
-                  <XCircle className="w-3 h-3" />
-                  Failed
+                <span className="text-[10px] uppercase tracking-wider font-bold text-amber-600 flex items-center gap-1 bg-amber-100/50 px-1.5 py-0.5 rounded">
+                  Running
                 </span>
               )}
             </div>
@@ -159,9 +146,9 @@ function ActionMessage({ message, className }: ActionMessageProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 w-7 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600"
               >
-                {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                {isOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
               </Button>
             </CollapsibleTrigger>
           </Collapsible>
@@ -171,16 +158,16 @@ function ActionMessage({ message, className }: ActionMessageProps) {
         <Collapsible open={isOpen}>
           <CollapsibleContent>
             <div className="px-3 pb-3">
-              <div className="relative bg-slate-900 rounded-lg p-3 group">
+              <div className="relative bg-slate-900 rounded-[6px] p-3 group border border-slate-800 shadow-inner">
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="absolute right-2 top-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-white hover:bg-slate-700"
+                  className="absolute right-2 top-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-slate-300 hover:bg-slate-800"
                   onClick={handleCopy}
                 >
                   {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
                 </Button>
-                <pre className="text-xs text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap">
+                <pre className="text-[11px] leading-relaxed text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap">
                   {codeString}
                 </pre>
               </div>
@@ -230,13 +217,13 @@ export function ChatMessage({ message, className }: ChatMessageProps) {
   // User messages
   if (isUser) {
     return (
-      <div className={cn("flex justify-end", className)}>
-        <div className="flex items-start gap-2 max-w-full">
-          <div className="bg-blue-600 text-white px-4 py-2.5 rounded-2xl rounded-br-md shadow-sm min-w-0 max-w-[calc(100%-3rem)]">
-            <p className="text-sm break-words">{message.content}</p>
+      <div className={cn("flex justify-end group", className)}>
+        <div className="flex items-start gap-3 max-w-full">
+          <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white px-5 py-3.5 rounded-2xl rounded-tr-sm shadow-md min-w-0 max-w-[calc(100%-3rem)] ring-1 ring-blue-700/50">
+            <p className="text-sm leading-relaxed break-words font-medium">{message.content}</p>
           </div>
-          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
-            <User className="w-4 h-4 text-blue-600" />
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100/50 flex items-center justify-center ring-2 ring-white shadow-sm">
+            <User className="w-4 h-4 text-blue-700" />
           </div>
         </div>
       </div>
@@ -251,13 +238,13 @@ export function ChatMessage({ message, className }: ChatMessageProps) {
     }
 
     return (
-      <div className={cn("flex justify-start", className)}>
-        <div className="flex items-start gap-2 max-w-full">
-          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center">
-            <Bot className="w-4 h-4 text-slate-600" />
+      <div className={cn("flex justify-start group", className)}>
+        <div className="flex items-start gap-3 max-w-full">
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center ring-2 ring-white shadow-md">
+            <Bot className="w-5 h-5 text-white" />
           </div>
-          <div className="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl rounded-bl-md shadow-sm min-w-0 max-w-[calc(100%-3rem)] hover:shadow-md transition-shadow">
-            <div className="text-sm text-slate-700 prose prose-sm prose-slate max-w-none overflow-hidden break-words">
+          <div className="bg-white/90 backdrop-blur-sm border border-slate-200/60 px-5 py-4 rounded-2xl rounded-tl-sm shadow-sm min-w-0 max-w-[calc(100%-3rem)] hover:shadow-md transition-all duration-300">
+            <div className="text-sm text-slate-700 prose prose-sm prose-slate max-w-none overflow-hidden break-words prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-50">
               <MemoizedReactMarkdown>
                 {(() => {
                   try {

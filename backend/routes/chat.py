@@ -26,11 +26,14 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None, res
     
     try:
         # 1. Initialize Sandbox if needed
-        if not agent_service.container_running:
-             res = resolution if resolution and len(resolution) == 2 else None
-             info = agent_service.initialize_sandbox(resolution=res)
-             # Yield sandbox info - CRITICAL: frontend needs sandboxId and vncUrl
-             yield f"event: sandbox_created\ndata: {json.dumps({'sandboxId': info['sandbox_id'], 'vncUrl': info['vnc_url']})}\n\n"
+        # 1. Initialize Sandbox if needed (Idempotent call to get info)
+        res = resolution if resolution and len(resolution) == 2 else None
+        info = agent_service.initialize_sandbox(resolution=res)
+        
+        # Yield sandbox info - CRITICAL: frontend needs sandboxId and vncUrl
+        # We SEND THIS ALWAYS so the frontend can reconnect to the VNC stream 
+        # even if the backend was already running.
+        yield f"event: sandbox_created\ndata: {json.dumps({'sandboxId': info['sandbox_id'], 'vncUrl': info['vnc_url']})}\n\n"
         
         # 2. Start Agent Step
         yield f"event: reasoning\ndata: {json.dumps({'content': 'Analyzing screen and planning actions...'})}\n\n"

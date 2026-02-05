@@ -125,6 +125,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
     sandboxId,
     environment,
     resolution,
+    image: imageArg,
+    selectedTool: toolArg,
   }: SendMessageOptions) => {
     if (isLoading) return;
 
@@ -162,11 +164,15 @@ export function ChatProvider({ children }: ChatProviderProps) {
           environment,
           resolution,
           model,
-          image,
-          selectedTool,
+          image: imageArg || image,
+          selectedTool: toolArg || selectedTool,
         }),
         signal: abortControllerRef.current.signal,
       });
+
+      // Clear image and tool after successful send initiation
+      setImage(null);
+      setSelectedTool(null);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -370,7 +376,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const handleSubmit = useCallback(
     (e: React.FormEvent): string | undefined => {
       e.preventDefault();
-      if (!input.trim()) return;
+      // Allow submit if there is an image, even if input is empty
+      if (!input.trim() && !image) return;
 
       const content = input.trim();
       setInput("");

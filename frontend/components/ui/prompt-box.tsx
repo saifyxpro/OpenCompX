@@ -119,6 +119,7 @@ export const PromptBox = React.forwardRef<HTMLTextAreaElement, PromptBoxProps>(
                             </button>
                         </div>
                         <DialogContent>
+                            <DialogPrimitive.Title className="sr-only">Image Preview</DialogPrimitive.Title>
                             <img src={image} alt="Full size preview" className="w-full max-h-[95vh] object-contain rounded-2xl" />
                         </DialogContent>
                     </Dialog>

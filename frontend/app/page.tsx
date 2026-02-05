@@ -341,12 +341,14 @@ export default function Home() {
 
   const onSubmit = useCallback((e: React.FormEvent) => {
     const content = handleSubmit(e);
-    if (content) {
+    if (content !== undefined) {
       sendMessage({
-        content,
+        content: content || "", // Allow empty content if image exists
         sandboxId: sandboxId || undefined,
         environment: "linux",
         resolution: getResolution(),
+        image,
+        selectedTool,
       });
     }
   }, [handleSubmit, sendMessage, sandboxId, getResolution]);
