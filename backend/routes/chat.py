@@ -25,95 +25,83 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None, res
     """Generate SSE events with proper structured format for frontend consumption."""
     
     try:
-        # 1. Initialize Sandbox if needed
-        # 1. Initialize Sandbox if needed (Idempotent call to get info)
+        # 1. Initialize Sandbox
         res = resolution if resolution and len(resolution) == 2 else None
         info = agent_service.initialize_sandbox(resolution=res)
         
-        # Yield sandbox info - CRITICAL: frontend needs sandboxId and vncUrl
-        # We SEND THIS ALWAYS so the frontend can reconnect to the VNC stream 
-        # even if the backend was already running.
         yield f"event: sandbox_created\ndata: {json.dumps({'sandboxId': info['sandbox_id'], 'vncUrl': info['vnc_url']})}\n\n"
+        yield f"event: reasoning\ndata: {json.dumps({'content': 'Initializing Agent (V0.1 LangGraph)...'})}\n\n"
         
-        # 2. Start Agent Step
-        yield f"event: reasoning\ndata: {json.dumps({'content': 'Analyzing screen and planning actions...'})}\n\n"
+        # 2. Run LangGraph Agent
+        if not agent_service.langgraph_agent:
+             yield f"event: error\ndata: {json.dumps({'content': 'LangGraph functionality is not enabled or failed to initialize.'})}\n\n"
+             return
+
+        # V0.1: Use LangGraph Runner
+        stream = agent_service.langgraph_agent.run(instruction, user_image=image)
         
-        # 3. Start Agent Loop for Max 50 steps
-        executed_count = 0
-        
-        for step in range(50):
-            # Run one step (blocking inside thread)
-            # Pass reset_env only for step 0
-            should_reset = reset_env if step == 0 else False
-            result = await asyncio.to_thread(agent_service.execute_next_step, instruction, step, executed_count, should_reset, image=image, selectedTool=selectedTool)
-            
-            if result["status"] == "error":
-                 yield f"event: error\ndata: {json.dumps({'content': result['message']})}\n\n"
-                 return
+        pending_actions = []
 
-            # Yield reasoning/plan BEFORE actions (agent's narrative explanation)
-            if result.get("info"):
-                 plan = result["info"].get("plan", "")
-                 if plan and not plan.strip().startswith("```"):
-                     # Extract narrative (text before code blocks)
-                     narrative = plan.split("```")[0].strip()
-                     if narrative and len(narrative) > 10:  # Meaningful text
-                         yield f"event: reasoning\ndata: {json.dumps({'content': narrative})}\n\n"
+        for output in stream:
+            # Handle Agent Node Output
+            if "agent" in output:
+                payload = output["agent"]
+                logs = payload.get("logs", [])
+                actions = payload.get("latest_actions", [])
+                status = payload.get("status", "running")
+                info = payload.get("info", {})
+                
+                # Yield Logs/Reasoning
+                for log in logs:
+                    yield f"event: reasoning\ndata: {json.dumps({'content': log})}\n\n"
+                
+                # Yield Plan/Thought
+                plan = info.get("plan", "")
+                if plan:
+                    clean_plan = plan.split("```")[0].strip() # Simple heuristic
+                    if clean_plan:
+                         yield f"event: reasoning\ndata: {json.dumps({'content': clean_plan})}\n\n"
+                
+                # Check outcome BEFORE actions (if immediate done)
+                if status == "done":
+                    final_msg = "Task completed successfully."
+                    if actions: # If explicit DONE action
+                         final_msg = "Task completed."
+                    yield f"event: done\ndata: {json.dumps({'content': final_msg})}\n\n"
+                    break
+                elif status == "fail":
+                    yield f"event: done\ndata: {json.dumps({'content': 'Task failed.'})}\n\n"
+                    break
+                
+                # Yield Actions
+                pending_actions = actions # Track for completion in tool node
+                for action in actions:
+                    action_payload = {
+                        "type": "computer_action",
+                        "action_type": "execute",
+                        "code": action
+                    }
+                    yield f"event: action\ndata: {json.dumps({'action': action_payload})}\n\n"
+                    await asyncio.sleep(0.1)
 
-            # Yield actions and logs
-            actions = result.get("actions", [])
-            logs = result.get("logs", [])
-            executed_count += len(actions)
-            
-            for i, action in enumerate(actions):
-                # Send action event
-                action_payload = {
-                    "type": "computer_action",
-                    "action_type": "execute",
-                    "code": action
-                }
-                yield f"event: action\ndata: {json.dumps({'action': action_payload})}\n\n"
+            # Handle Tool Node Output
+            elif "tools" in output:
+                payload = output["tools"]
+                logs = payload.get("logs", [])
                 
-                await asyncio.sleep(0.1)
+                # Yield Tool Logs
+                for log in logs:
+                    yield f"event: reasoning\ndata: {json.dumps({'content': log})}\n\n"
                 
-                # Corresponding log
-                if i < len(logs):
-                    yield f"event: reasoning\ndata: {json.dumps({'content': logs[i]})}\n\n"
-                
-                # Complete the action card
-                yield f"event: action_completed\ndata: {json.dumps({})}\n\n"
-            
-            # Remaining logs
-            for log in logs[len(actions):]:
-                yield f"event: reasoning\ndata: {json.dumps({'content': log})}\n\n"
+                # Mark pending actions as completed
+                for _ in pending_actions:
+                    yield f"event: action_completed\ndata: {json.dumps({})}\n\n"
+                pending_actions = []
 
-            # Check termination
-            if result["status"] == "done":
-                # Send the agent's final response (the summary/report from the plan)
-                plan = result.get("info", {}).get("plan", "")
-                reflection = result.get("info", {}).get("reflection", "")
+            # Handle unexpected structure
+            else:
+                pass
                 
-                # If plan is just code (agent.done()), use reflection instead
-                if plan and ("agent.done()" in plan or "```python" in plan):
-                    final_response = reflection or "Task completed successfully."
-                else:
-                    final_response = plan or reflection or "Task completed"
-                
-                if final_response and final_response != "Task completed":
-                    yield f"event: reasoning\ndata: {json.dumps({'content': final_response})}\n\n"
-                yield f"event: done\ndata: {json.dumps({'content': 'Task completed'})}\n\n"
-                break
-            elif result["status"] == "fail":
-                # For failures, also send the plan if available (might explain why it failed)
-                failure_info = result.get("info", {}).get("plan", "") or result.get("info", {}).get("reflection", "") or "Task failed"
-                if failure_info and failure_info != "Task failed":
-                    yield f"event: reasoning\ndata: {json.dumps({'content': failure_info})}\n\n"
-                yield f"event: done\ndata: {json.dumps({'content': 'Task failed'})}\n\n"
-                break
-            
-            # Important: Keep-alive / pacing
-            await asyncio.sleep(0.1)
-
     except Exception as e:
         yield f"event: error\ndata: {json.dumps({'content': str(e)})}\n\n"
 

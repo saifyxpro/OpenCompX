@@ -32,9 +32,8 @@ const LightbulbIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg viewBox="0
 const SquareIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" {...props}><rect x="6" y="6" width="12" height="12" rx="2" /></svg>);
 
 const toolsList = [
-    { id: 'createImage', name: 'Create an image', shortName: 'Image', icon: PaintBrushIcon },
     { id: 'searchWeb', name: 'Search the web', shortName: 'Search', icon: GlobeIcon },
-    { id: 'writeCode', name: 'Write or code', shortName: 'Write', icon: PencilIcon },
+    { id: 'writeCode', name: 'Write or code', shortName: 'Code', icon: PencilIcon },
     { id: 'deepResearch', name: 'Run deep research', shortName: 'Deep Search', icon: TelescopeIcon },
     { id: 'thinkLonger', name: 'Think for longer', shortName: 'Think', icon: LightbulbIcon },
 ];

@@ -12,4 +12,9 @@ opencv-python-headless
 websockets>=12.0
 numpy==1.26.4
 google-generativeai
-google-genai
+
+# LangChain & LangGraph
+langchain>=0.1.0
+langgraph>=0.0.10
+langchain-openai>=0.0.5
+langchain-google-genai>=0.0.5
