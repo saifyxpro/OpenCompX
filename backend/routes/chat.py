@@ -41,6 +41,9 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None, res
         pending_actions = []
 
         for output in stream:
+            # Keep-Alive Ping
+            yield f"event: ping\ndata: {json.dumps({'timestamp': 1})}\n\n"
+            
             # Handle Agent Node Output
             if "agent" in output:
                 payload = output["agent"]
@@ -79,7 +82,14 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None, res
                         "action_type": "execute",
                         "code": action
                     }
+                    action_payload = {
+                        "type": "computer_action",
+                        "action_type": "execute",
+                        "code": action
+                    }
                     yield f"event: action\ndata: {json.dumps({'action': action_payload})}\n\n"
+                    # Keep connection alive during action execution
+                    yield f"event: ping\ndata: {json.dumps({'timestamp': 1})}\n\n"
                     await asyncio.sleep(0.1)
 
             # Handle Tool Node Output
