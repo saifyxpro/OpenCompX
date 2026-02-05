@@ -108,7 +108,7 @@ export const PromptBox = React.forwardRef<HTMLTextAreaElement, PromptBoxProps>(
         const ActiveToolIcon = activeTool?.icon;
 
         return (
-            <div className={cn("flex flex-col rounded-3xl p-2 shadow-sm transition-colors bg-white border border-slate-200 dark:bg-[#303030] dark:border-transparent cursor-text", className)}>
+            <div className={cn("flex flex-col rounded-3xl p-2 transition-colors cursor-text", className)}>
                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
 
                 {image && (
