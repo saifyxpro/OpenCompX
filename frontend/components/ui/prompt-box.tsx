@@ -156,7 +156,7 @@ export const PromptBox = React.forwardRef<HTMLTextAreaElement, PromptBoxProps>(
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <PopoverTrigger asChild>
-                                            <button type="button" className="flex h-8 items-center gap-2 rounded-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-[#3a3a3a] hover:bg-gray-200 dark:hover:bg-[#454545] transition-colors focus-visible:outline-none">
+                                            <button type="button" className="flex h-8 items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors focus-visible:outline-none">
                                                 <Settings2Icon className="h-4 w-4" />
                                                 {!selectedTool && 'Tools'}
                                             </button>
