@@ -42,6 +42,7 @@ class AgentService:
 
         self.agent = None
         self.adapter = None
+        self.langgraph_agent = None
         self.vnc_url = None
         self.container_running = False
         self.container_name = "opencompx-desktop"
@@ -60,15 +61,17 @@ class AgentService:
                 print("Container already running!")
             
             self.container_running = True
+            
+            # 1. Initialize Adapter
             if not self.adapter:
-                # Initialize adapter with container name
                 self.adapter = LocalDockerAdapter(self.container_name)
                 
-                # Legacy: Assign adapter to agent's tool environment if possible
-                if self.agent and hasattr(self.agent, "set_adapter"):
-                     self.agent.set_adapter(self.adapter)
-                     
-                # V0.1: Initialize LangGraph Agent
+            # 2. Initialize Agent (Dependency for LangGraph)
+            if not self.agent and AgentS3:
+                 self._init_agent()
+                 
+            # 3. Initialize LangGraph Agent
+            if not self.langgraph_agent:
                 try:
                     from backend.services.langgraph_agent import LangGraphAgentService
                     self.langgraph_agent = LangGraphAgentService(self.agent, self.adapter)
@@ -88,10 +91,6 @@ class AgentService:
             
             # Wait for desktop to be ready
             self._wait_for_desktop_ready()
-            
-            # Init Agent
-            if AgentS3:
-                self._init_agent()
                 
         return {"sandbox_id": "local-docker", "vnc_url": self.vnc_url}
 

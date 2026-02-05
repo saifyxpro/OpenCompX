@@ -5,7 +5,7 @@ services:
     build:
       context: ./docker
       dockerfile: Dockerfile.desktop
-    container_name: openmanus-desktop
+    container_name: opencompx-desktop
     environment:
       - VNC_RESOLUTION=1920x1080
       - VNC_COL_DEPTH=24

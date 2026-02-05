@@ -5,7 +5,7 @@ services:
     build:
       context: ./backend
       dockerfile: ../docker/backend.Dockerfile
-    container_name: openmanus-backend
+    container_name: opencompx-backend
     ports:
       - "8000:8000"
     environment:
@@ -22,7 +22,7 @@ services:
     build:
       context: ./frontend
       dockerfile: ../docker/frontend.Dockerfile
-    container_name: openmanus-frontend
+    container_name: opencompx-frontend
     ports:
       - "3000:3000"
     environment:

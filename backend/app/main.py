@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.routes import chat
 import uvicorn
 
-app = FastAPI(title="OpenManus Agent S3 Backend")
+app = FastAPI(title="OpenCompX Agent S3 Backend")
 
 # CORS setup
 app.add_middleware(
