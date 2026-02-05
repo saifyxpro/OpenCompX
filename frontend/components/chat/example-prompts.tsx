@@ -55,24 +55,19 @@ export function ExamplePrompts({
 }: ExamplePromptsProps) {
   const defaultPrompts = [
     {
+      icon: <Globe className="w-4 h-4" />,
+      text: "Go to Google",
+      prompt: "Open Firefox and go to google.com",
+    },
+    {
       icon: <Code className="w-4 h-4" />,
-      text: "Create a JavaScript script",
-      prompt: "Create a simple JavaScript script that calculates the Fibonacci sequence and save it to a file",
+      text: "Write Hello World",
+      prompt: "Create a python file named hello.py that prints 'Hello World'",
     },
     {
       icon: <FileEdit className="w-4 h-4" />,
-      text: "Edit a document in VS Code",
-      prompt: "Open VS Code and create a simple React component that displays a counter",
-    },
-    {
-      icon: <Globe className="w-4 h-4" />,
-      text: "Browse GitHub",
-      prompt: "Open Firefox and go to GitHub to search for popular machine learning repositories",
-    },
-    {
-      icon: <Table className="w-4 h-4" />,
-      text: "Create a spreadsheet",
-      prompt: "Open LibreOffice Calc and create a simple budget spreadsheet with formulas",
+      text: "Research AI",
+      prompt: "Search for 'latest text-to-image models' and summarize the top result",
     },
   ];
 
@@ -83,7 +78,7 @@ export function ExamplePrompts({
       <div className="text-center">
         <p className="text-sm font-medium text-slate-500">Try an example</p>
       </div>
-      
+
       <div className="grid gap-2">
         {items.map((item, index) => (
           <ExamplePromptCard
