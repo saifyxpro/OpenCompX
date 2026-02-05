@@ -141,6 +141,8 @@ class LangGraphAgentService:
             try:
                 # Sanitize & Intercept (simplified from agent_service.py)
                 sanitized_act = act.replace("import subprocess", "pass")
+                sanitized_act = sanitized_act.replace("import pyautogui;", "pass;")
+                sanitized_act = sanitized_act.replace("import pyautogui", "pass")
                 
                 # Execute
                 import subprocess as _subprocess
