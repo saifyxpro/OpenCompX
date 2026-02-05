@@ -130,7 +130,7 @@ function ActionMessage({ message, className }: ActionMessageProps) {
             )}>
               <Icon className="w-4 h-4" />
             </div>
-            
+
             <div className="flex flex-col">
               <span className="text-sm font-medium text-slate-900">{title}</span>
               {isPending && (
@@ -156,9 +156,9 @@ function ActionMessage({ message, className }: ActionMessageProps) {
 
           <Collapsible open={isOpen} onOpenChange={setIsOpen}>
             <CollapsibleTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-7 w-7 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
               >
                 {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -249,7 +249,7 @@ export function ChatMessage({ message, className }: ChatMessageProps) {
     if (isRawCode(message.content)) {
       return null;
     }
-    
+
     return (
       <div className={cn("flex justify-start", className)}>
         <div className="flex items-start gap-2 max-w-full">
@@ -258,7 +258,25 @@ export function ChatMessage({ message, className }: ChatMessageProps) {
           </div>
           <div className="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl rounded-bl-md shadow-sm min-w-0 max-w-[calc(100%-3rem)]">
             <div className="text-sm text-slate-700 prose prose-sm prose-slate max-w-none overflow-hidden break-words">
-              <MemoizedReactMarkdown>{message.content}</MemoizedReactMarkdown>
+              <div className="text-sm text-slate-700 prose prose-sm prose-slate max-w-none overflow-hidden break-words">
+                <MemoizedReactMarkdown>
+                  {(() => {
+                    try {
+                      // Try to parse content as JSON to extract natural language reflection
+                      const parsed = JSON.parse(message.content);
+                      if (typeof parsed === 'object' && parsed !== null) {
+                        // Prefer reflection, then thoughts, then plan
+                        const naturalText = parsed.reflection || parsed.thoughts || parsed.reflection_thoughts || parsed.plan;
+                        if (naturalText) return naturalText;
+                      }
+                      return message.content;
+                    } catch (e) {
+                      // Not JSON, return original content
+                      return message.content;
+                    }
+                  })()}
+                </MemoizedReactMarkdown>
+              </div>
             </div>
           </div>
         </div>

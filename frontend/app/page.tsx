@@ -103,17 +103,18 @@ function DesktopViewer({
       {/* Desktop Content */}
       <div ref={iFrameWrapperRef} className="flex-1 relative bg-slate-100">
         {showLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white">
-            <div className="flex flex-col items-center gap-4">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-[#0a0a0a]/90 backdrop-blur-sm z-50">
+            <div className="flex flex-col items-center gap-6 p-8 rounded-3xl bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-2xl">
               <div className="relative">
-                <div className="w-16 h-16 rounded-2xl bg-slate-900 flex items-center justify-center shadow-xl">
-                  <Loader variant="square" className="text-white w-8 h-8" />
+                <div className="w-20 h-20 rounded-2xl bg-slate-900 dark:bg-black flex items-center justify-center shadow-inner relative z-10 group overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Loader variant="square" className="text-white w-10 h-10 relative z-20" />
                 </div>
-                <div className="absolute -inset-2 bg-slate-900/20 rounded-3xl blur-xl animate-pulse" />
+                <div className="absolute -inset-4 bg-blue-500/20 rounded-full blur-2xl animate-pulse" />
               </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-slate-900">Starting Desktop</p>
-                <p className="text-xs text-slate-500 mt-1">This may take a few seconds...</p>
+              <div className="text-center space-y-1.5">
+                <p className="text-lg font-semibold text-slate-900 dark:text-white">Starting Desktop</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Initializing environment...</p>
               </div>
             </div>
           </div>
@@ -227,12 +228,12 @@ function ChatPanel({
         {sandboxId && (
           <Button
             onClick={onStopSandbox}
-            variant="error"
+            variant="destructive"
             size="sm"
-            className="h-7 text-xs"
+            className="h-7 text-xs font-medium px-3 shadow-sm hover:bg-red-600 transition-colors"
           >
-            <Square className="w-3 h-3 mr-1.5" />
-            Stop
+            <Square className="w-3 h-3 mr-1.5 fill-current" />
+            Stop Desktop
           </Button>
         )}
       </div>
