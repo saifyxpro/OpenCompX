@@ -260,6 +260,41 @@ class LocalDockerAdapter:
         except:
             return (1920, 1080)
 
+    def drag_rel(self, x_offset, y_offset, duration=0.0, **kwargs):
+        """Drag relative to current position (Good for sliders)."""
+        logger.info(f"Local Drag Rel: x={x_offset}, y={y_offset}")
+        self._exec("xdotool mousedown 1")
+        self._exec(f"xdotool mousemove_relative -- {int(x_offset)} {int(y_offset)}")
+        self._exec("xdotool mouseup 1")
+
+    def run_terminal(self, cmd: str):
+        """Run a shell command in the container background."""
+        logger.info(f"Local Terminal Run: {cmd}")
+        return self._exec(cmd, timeout=10).stdout
+
+    def set_clipboard(self, text: str):
+        """Set clipboard content using xclip."""
+        safe_text = text.replace("'", "'\\''")
+        self._exec(f"echo -n '{safe_text}' | xclip -selection clipboard")
+
+    def get_clipboard(self) -> str:
+        """Get clipboard content."""
+        return self._exec("xclip -selection clipboard -o", timeout=5).stdout
+
+    def wait_for_vnc(self, timeout: int = 15) -> bool:
+        """Poll container to check if VNC port (6080) is listening."""
+        logger.info(f"Waiting for VNC to be ready (timeout={timeout}s)...")
+        start = time.time()
+        while time.time() - start < timeout:
+            try:
+                res = self._exec("pgrep -f websockify", timeout=2)
+                if res.returncode == 0:
+                    return True
+            except:
+                pass
+            time.sleep(0.5)
+        return False
+
 
 def is_container_running(container_name: str = "openmanus-desktop") -> bool:
     """Check if the desktop container is running."""
@@ -280,59 +315,12 @@ def start_container():
             ["docker", "compose", "-f", "docker-compose.desktop.yml", "up", "-d", "--build"],
             check=True, timeout=300
         )
-        
-        # Smart wait for VNC instead of sleep
-        # We need an instance to check, but this is a standalone function.
-        # We'll just sleep briefly to let docker register, then let usage sites check.
-        time.sleep(2) 
+        time.sleep(2)
         return True
     except Exception as e:
         logger.error(f"Failed to start container: {e}")
         return False
 
-
-    def drag_rel(self, x_offset, y_offset, duration=0.0, **kwargs):
-        """Drag relative to current position (Good for sliders)."""
-        logger.info(f"Local Drag Rel: x={x_offset}, y={y_offset}")
-        self._exec("xdotool mousedown 1")
-        self._exec(f"xdotool mousemove_relative -- {int(x_offset)} {int(y_offset)}")
-        self._exec("xdotool mouseup 1")
-
-    def run_terminal(self, cmd: str):
-        """Run a shell command in the container background."""
-        logger.info(f"Local Terminal Run: {cmd}")
-        return self._exec(cmd, timeout=10).stdout
-
-    def set_clipboard(self, text: str):
-        """Set clipboard content using xclip."""
-        # Escaping for echo
-        safe_text = text.replace("'", "'\\''")
-        self._exec(f"echo -n '{safe_text}' | xclip -selection clipboard")
-
-    def get_clipboard(self) -> str:
-        """Get clipboard content."""
-        return self._exec("xclip -selection clipboard -o", timeout=5).stdout
-
-    def wait_for_vnc(self, timeout: int = 15) -> bool:
-        """Poll container to check if VNC port (6080) is listening."""
-        logger.info(f"Waiting for VNC to be ready (timeout={timeout}s)...")
-        start = time.time()
-        while time.time() - start < timeout:
-            try:
-                # Check if websockify (noVNC) is running/listening
-                # We use netstat or looking for the process. 
-                # Simplest: check if port 6080 is open in the container.
-                # Since we might not have netstat, we can check process list.
-                # Or try to connect to localhost:6080 INSIDE container? No, we are outside.
-                
-                # Check for websockify process
-                res = self._exec("pgrep -f websockify", timeout=2)
-                if res.returncode == 0:
-                    return True
-            except:
-                pass
-            time.sleep(0.5)
-        return False
 
 def get_novnc_url(port: int = 6080) -> str:
     """Get the noVNC URL for the local container."""
