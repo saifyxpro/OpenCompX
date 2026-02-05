@@ -44,6 +44,7 @@ class AgentService:
         self.adapter = None
         self.vnc_url = None
         self.container_running = False
+        self.container_name = "openmanus-desktop"
 
     def initialize_sandbox(self, resolution=None):
         """Initialize local Docker container for desktop automation."""

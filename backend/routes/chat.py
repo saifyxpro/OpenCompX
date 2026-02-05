@@ -6,8 +6,6 @@ import json
 import asyncio
 
 router = APIRouter()
-
-# Initialize Agent Service (Singleton dependent on lifecycle, but global for now)
 agent_service = AgentService()
 
 class ChatRequest(BaseModel):
