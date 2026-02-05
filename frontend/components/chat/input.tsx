@@ -62,7 +62,7 @@ export function ChatInput({
         onToolChange={setSelectedTool}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        disabled={disabled}
+        disabled={disabled || isLoading}
         className="w-full"
       />
     </form>

@@ -10,10 +10,10 @@ import {
   Github,
   Play,
   Square,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { increaseTimeout, stopSandboxAction } from "@/app/actions";
 import { ChatList } from "@/components/chat/message-list";
 import { ChatInput } from "@/components/chat/input";
 import { ExamplePrompts } from "@/components/chat/example-prompts";
@@ -104,18 +104,11 @@ function DesktopViewer({
       <div ref={iFrameWrapperRef} className="flex-1 relative bg-slate-100">
         {showLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-[#0a0a0a]/90 backdrop-blur-sm z-50">
-            <div className="flex flex-col items-center gap-6 p-8 rounded-3xl bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-2xl">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-2xl bg-slate-900 dark:bg-black flex items-center justify-center shadow-inner relative z-10 group overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <Loader variant="square" className="text-white w-10 h-10 relative z-20" />
-                </div>
-                <div className="absolute -inset-4 bg-blue-500/20 rounded-full blur-2xl animate-pulse" />
-              </div>
-              <div className="text-center space-y-1.5">
-                <p className="text-lg font-semibold text-slate-900 dark:text-white">Starting Desktop</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Initializing environment...</p>
-              </div>
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="w-8 h-8 text-slate-900 dark:text-white animate-spin" />
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">
+                Starting Desktop...
+              </p>
             </div>
           </div>
         )}
@@ -321,16 +314,12 @@ export default function Home() {
     if (!sandboxId) return;
     try {
       stopGeneration();
-      const success = await stopSandboxAction(sandboxId);
-      if (success) {
-        setSandboxId(null);
-        setVncUrl(null);
-        clearMessages();
-        setTimeRemaining(SANDBOX_TIMEOUT_MS / 1000);
-        toast.success("Session ended");
-      } else {
-        toast.error("Failed to stop session");
-      }
+      // Local Docker logic - just clear state
+      setSandboxId(null);
+      setVncUrl(null);
+      clearMessages();
+      setTimeRemaining(SANDBOX_TIMEOUT_MS / 1000);
+      toast.success("Session ended");
     } catch (error) {
       console.error("Failed to stop sandbox:", error);
       toast.error("Failed to stop session");
@@ -339,12 +328,8 @@ export default function Home() {
 
   const handleIncreaseTimeout = useCallback(async () => {
     if (!sandboxId) return;
-    try {
-      await increaseTimeout(sandboxId);
-      setTimeRemaining(SANDBOX_TIMEOUT_MS / 1000);
-    } catch (error) {
-      console.error("Failed to increase time:", error);
-    }
+    // Local Docker mode - just reset timer
+    setTimeRemaining(SANDBOX_TIMEOUT_MS / 1000);
   }, [sandboxId]);
 
   // Message handlers
