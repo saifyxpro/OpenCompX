@@ -232,6 +232,15 @@ class AgentService:
         )
         print("Agent S3 Initialized!")
 
+    def ensure_backend_ready(self):
+        """Reset internal state for a new request."""
+        # If we have active tasks that are "stuck", clear them?
+        # For V0.1 LangGraph, we mostly need to ensure the adapter is free
+        # But since we share the container, we don't want to kill the container unless necessary
+        # We SHOULD kill running apps though, to start fresh
+        self.cleanup_desktop()
+        print("Backend state reset for new request.")
+
     # Legacy step/execute_next_step methods removed in favor of LangGraphAgentService
 
 

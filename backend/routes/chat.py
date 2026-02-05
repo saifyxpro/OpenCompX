@@ -23,7 +23,10 @@ async def event_generator(instruction: str, existing_sandbox_id: str | None, res
     """Generate SSE events with proper structured format for frontend consumption."""
     
     try:
-        # 1. Initialize Sandbox
+        # 1. Reset/Prepare Backend State
+        agent_service.ensure_backend_ready()
+        
+        # 2. Initialize Sandbox
         res = resolution if resolution and len(resolution) == 2 else None
         info = agent_service.initialize_sandbox(resolution=res)
         

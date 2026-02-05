@@ -178,6 +178,13 @@ class LangGraphAgentService:
                 sanitized_act = clean_act.replace("import subprocess", "pass")
                 sanitized_act = sanitized_act.replace("import pyautogui;", "pass;")
                 sanitized_act = sanitized_act.replace("import pyautogui", "pass")
+                
+                # BUGFIX: UI-TARS generates `clicks=0.95` (confidence) instead of integer.
+                # Replace clicks=FLOAT with clicks=1
+                import re
+                sanitized_act = re.sub(r'clicks=\d+\.\d+', 'clicks=1', sanitized_act)
+
+                logger.info(f"Executing Agent Code: {sanitized_act}")
 
                 # Interceptor: Catch "Start Menu" usage and convert to direct launch
                 lower_act = sanitized_act.lower()
