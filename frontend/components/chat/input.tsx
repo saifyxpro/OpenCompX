@@ -63,6 +63,8 @@ export function ChatInput({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled || isLoading}
+        isLoading={isLoading}
+        onStop={onStop}
         className="w-full"
       />
     </form>
