@@ -38,6 +38,22 @@ class LocalDockerAdapter:
             raise RuntimeError("Docker command timed out")
         except FileNotFoundError:
             raise RuntimeError("Docker is not installed or not in PATH")
+
+    def get_resolution(self) -> tuple[int, int]:
+        """Get the current screen resolution from the container."""
+        try:
+            # parsing xdpyinfo output: '  dimensions:    1920x1080 pixels (508x285 millimeters)'
+            cmd = "xdpyinfo | grep dimensions | awk '{print $2}'"
+            result = self._exec(cmd).stdout.strip()
+            if "x" in result:
+                width, height = map(int, result.split("x"))
+                logger.info(f"Detected Container Resolution: {width}x{height}")
+                return width, height
+        except Exception as e:
+            logger.error(f"Failed to detect resolution: {e}")
+        
+        logger.warning("Could not detect resolution, defaulting to 1920x1080")
+        return 1920, 1080
     
     def _exec(self, cmd: str, timeout: int = 30) -> subprocess.CompletedProcess:
         """Execute command in container with DISPLAY set."""
@@ -96,7 +112,31 @@ class LocalDockerAdapter:
             self._exec(f"xdotool mousemove {int(x)} {int(y)}")
         self._exec("xdotool click --repeat 2 --delay 100 1")
 
+    def rightClick(self, x=None, y=None, interval=0.0, **kwargs):
+        logger.info(f"Local RightClick: x={x}, y={y}")
+        if x is not None and y is not None:
+            self._exec(f"xdotool mousemove {int(x)} {int(y)}")
+        self._exec("xdotool click 3")
+        
+    def scroll(self, x=None, y=None, clicks=1, **kwargs):
+        """Scroll usage: clicks > 0 is UP (4), clicks < 0 is DOWN (5)"""
+        logger.info(f"Local Scroll: {clicks}")
+        if x is not None and y is not None:
+            self._exec(f"xdotool mousemove {int(x)} {int(y)}")
+            
+        direction = "4" if clicks > 0 else "5"
+        count = abs(int(clicks))
+        for _ in range(count):
+            self._exec(f"xdotool click {direction}")
+            time.sleep(0.05)
+
     # --- Keyboard / Text ---
+    def hotkey(self, *args, **kwargs):
+        """Execute hotkey combination e.g. 'ctrl', 'c' -> 'ctrl+c'."""
+        keys = "+".join(args)
+        logger.info(f"Local Hotkey: {keys}")
+        self._exec(f"xdotool key {keys}")
+        
     def typewrite(self, text, interval=0.0, **kwargs):
         """Type text using xdotool."""
         logger.info(f"Local Typewrite: {text}")

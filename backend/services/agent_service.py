@@ -54,9 +54,19 @@ class GroundingProxy:
         
     def typewrite(self, *args, **kwargs):
         """Alias for write - fixes planner hallucinations."""
-        # Just return a mock string, the real execution happens in LangGraph if code is valid
-        # But if the planner calls `agent.typewrite`, we want it to succeed here so LangGraph can intercept it
         return "Typed text"
+        
+    def hotkey(self, *args, **kwargs):
+        """Compat alias for hotkey."""
+        return "Hotkey pressed"
+        
+    def rightClick(self, *args, **kwargs):
+        """Compat alias for rightClick."""
+        return "Right clicked"
+        
+    def scroll(self, *args, **kwargs):
+        """Compat alias for scroll."""
+        return "Scrolled"
         
     def predict(self, *args, **kwargs):
         """Intercept the grounding call and inject the real screenshot."""
@@ -120,6 +130,15 @@ class AgentService:
             # 1. Initialize Adapter
             if not self.adapter:
                 self.adapter = LocalDockerAdapter(self.container_name)
+                
+            # 1.5 Get Real Resolution (Fixes Click Offsets)
+            try:
+                width, height = self.adapter.get_resolution()
+                print(f"Updating Grounding Resolution to: {width}x{height}")
+                self.ground_width = width
+                self.ground_height = height
+            except Exception as e:
+                print(f"Failed to get resolution, keeping default 1920x1080: {e}")
                 
             # 2. Initialize Agent (Dependency for LangGraph)
             if not self.agent and AgentS3:
